@@ -1,0 +1,32 @@
+{
+ "_comment": "Third-party code adapted into Filee's own sources (so present in every Filee.Engines build). Each entry was found in the upstream source tree at the pinned tag by reading the file headers named in 'where'.",
+ "items": [
+  {
+   "name": "pypandoc-hwpx",
+   "what": "package layout, styles and the reference document blank.hwpx; Pandoc AST mapping",
+   "where": "Filee.Engines/Hwp/Hwpx (HwpxWriter.cs, PandocAstReader.cs, blank.hwpx)",
+   "license": "MIT",
+   "repository": "https://github.com/msjang/pypandoc-hwpx",
+   "ref": "bfb595e6d79ede7c22bf7d154dc59a6bd7dcefb5",
+   "note": "commit that last changed pypandoc_hwpx/blank.hwpx; the file's git blob hash equals Filee's copy (a690a1fd)"
+  },
+  {
+   "name": "Svg.Skia",
+   "what": "text shaping adapted from SkiaModel.TextShaping.cs",
+   "where": "Filee.Engines/Vector/OutlinedTextPlayback.cs",
+   "license": "MIT",
+   "repository": "https://github.com/wieslawsoltes/Svg.Skia",
+   "ref": "3261e036769d0deba1f621265c7ab7000e3ce470",
+   "note": "commit of the Svg.Skia 5.1.1 package that Filee references"
+  },
+  {
+   "name": "fontTools cu2qu",
+   "what": "cubic-to-quadratic approach followed by CubicToQuadratic.cs",
+   "where": "Filee.Engines/Fonts/Cff/CubicToQuadratic.cs",
+   "license": "Apache-2.0",
+   "repository": "https://github.com/fonttools/fonttools",
+   "ref": "main",
+   "note": "approach only (no pinned version in the Filee source)"
+  }
+ ]
+}

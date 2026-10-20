@@ -1,0 +1,38 @@
+{
+ "_comment": "Source pins for NuGet packages whose nuspec has no repository commit, repository URL overrides, and license-file overrides. generate_notices.py fails for a package it cannot resolve to a commit or tag.",
+ "repository_override": {
+  "HarfBuzzSharp": "https://github.com/mono/SkiaSharp",
+  "HarfBuzzSharp.NativeAssets.*": "https://github.com/mono/SkiaSharp",
+  "SkiaSharp": "https://github.com/mono/SkiaSharp",
+  "SkiaSharp.NativeAssets.*": "https://github.com/mono/SkiaSharp",
+  "MsgReader": "https://github.com/Sicos1977/MSGReader",
+  "RtfPipe": "https://github.com/erdomke/RtfPipe",
+  "Microsoft.Maui.Graphics": "https://github.com/dotnet/maui",
+  "Unhwp": "https://github.com/iyulab/unhwp"
+ },
+ "ref_override": {
+  "PDFsharp": {
+   "ref": "9c3863a71b12067ff36e68a92c1a1f260114e2d1",
+   "note": "tag v6.2.4"
+  },
+  "MimeKitLite": {
+   "ref": "42a5bec3777923960aeac93d3d609d7cb24613a9",
+   "note": "tag 4.18.1"
+  },
+  "ExcelNumberFormat": {
+   "ref": "38c6a71919ad3895e3ba61d7a888012670d26303",
+   "note": "tag v1.1.0"
+  },
+  "RtfPipe": {
+   "ref": "2aedbf288eb012e2993330d334cf1a27f2026f7e",
+   "note": "last commit before the package's build date, 2021-01-07 (package version 2.0.7677.4303 encodes that date)"
+  }
+ },
+ "license_override": {
+  "RtfPipe": "MIT",
+  "ExcelNumberFormat": "MIT"
+ },
+ "license_file_override": {
+  "ExcelNumberFormat": "LICENSE.md"
+ }
+}

@@ -1,0 +1,41 @@
+{
+  "_comment": "Sources of the native components that are redistributed without being built here. Checked against the upstream release by scripts/generate_notices.py; update together with UPSTREAM (docs/updating.md).",
+  "rhwp": {
+    "version": "0.8.7",
+    "repository": "https://github.com/edwardkim/rhwp",
+    "tag": "v0.8.7",
+    "commit": "1a76570e833917d15817415a53c09ad61ab3203f",
+    "license": "MIT",
+    "rust_toolchain": "1.93.1"
+  },
+  "unhwp": {
+    "version": "0.13.0",
+    "repository": "https://github.com/iyulab/unhwp",
+    "commit": "405b17e137b3ca06299dcbc8a156599ac7027e91",
+    "license": "MIT"
+  },
+  "7zip": {
+    "version": "26.03",
+    "repository": "https://github.com/ip7z/7zip",
+    "tag": "26.03",
+    "commit": "0766b733fe3e06dd2a7f9a3cfbf2108ac73abd17",
+    "license": "LGPL-2.1-or-later (parts: LGPL with the unRAR license restriction, BSD-3-Clause, BSD-2-Clause)"
+  },
+  "magick_native": {
+    "version": "2026.927.1314",
+    "repository": "https://github.com/dlemstra/Magick.Native",
+    "tag": "2026.927.1314",
+    "commit": "999720f7ebe03d5a0029536f1586a2cb82b500ae"
+  },
+  "pdfium": {
+    "release": "chromium/7690",
+    "repository": "https://github.com/bblanchon/pdfium-binaries",
+    "assets": {
+      "win-x64": {"file": "pdfium-win-x64.tgz", "sha256": "06ef95ac4f9b8897731224639ddf0f185693cb48bc9ee650f1e92f71e0d2a94e"},
+      "linux-x64": {"file": "pdfium-linux-x64.tgz", "sha256": "addd9f59beea62536ad45f0ca6d38fb6088ba20a7260443deb595852fb51eac3"},
+      "linux-arm64": {"file": "pdfium-linux-arm64.tgz", "sha256": "76ee55e238ccd226b55de569217dd93aba71ffdb5368d5f72b5c2b49fab6dee0"},
+      "osx-x64": {"file": "pdfium-mac-x64.tgz", "sha256": "04bc0a7696452c903f006812d877250cdbc462bfe785ec79bb41b7d145f5774f"},
+      "osx-arm64": {"file": "pdfium-mac-arm64.tgz", "sha256": "0617e90556273ebe484d5f4a9981f366e10b4874f997896a4d27fe87d3c71ecf"}
+    }
+  }
+}

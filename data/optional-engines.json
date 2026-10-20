@@ -1,0 +1,53 @@
+{
+ "_comment": "Optional engines Filee can use when they are installed (PATH or its own download). They are NOT distributed in this package. Keys match src/Filee.Engines/Infrastructure/engines.json.",
+ "engines": {
+  "pandoc": {
+   "name": "Pandoc",
+   "license": "GPL-2.0-or-later",
+   "url": "https://pandoc.org/installing.html",
+   "source": "https://github.com/jgm/pandoc"
+  },
+  "ffmpeg": {
+   "name": "FFmpeg",
+   "license": "LGPL-2.1-or-later, or GPL-2.0-or-later / GPL-3.0-or-later for builds configured with --enable-gpl / --enable-version3 (the builds Filee downloads are GPL builds)",
+   "url": "https://ffmpeg.org/download.html",
+   "source": "https://ffmpeg.org/download.html#get-sources"
+  },
+  "calibre": {
+   "name": "calibre (ebook-convert)",
+   "license": "GPL-3.0",
+   "url": "https://calibre-ebook.com/download",
+   "source": "https://github.com/kovidgoyal/calibre"
+  },
+  "ghostscript": {
+   "name": "Ghostscript",
+   "license": "AGPL-3.0",
+   "url": "https://ghostscript.com/releases/gsdnld.html",
+   "source": "https://ghostscript.com/releases/gsdnld.html"
+  },
+  "libreoffice": {
+   "name": "LibreOffice",
+   "license": "MPL-2.0",
+   "url": "https://www.libreoffice.org/download/download-libreoffice/",
+   "source": "https://www.libreoffice.org/download/download-libreoffice/"
+  },
+  "h2orestart": {
+   "name": "H2Orestart (HWP/HWPX import extension for LibreOffice)",
+   "license": "GPL-3.0",
+   "url": "https://github.com/ebandal/H2Orestart/releases",
+   "source": "https://github.com/ebandal/H2Orestart"
+  },
+  "jre": {
+   "name": "Eclipse Temurin JRE (used by H2Orestart)",
+   "license": "GPL-2.0-only WITH Classpath-exception-2.0",
+   "url": "https://adoptium.net/temurin/releases/",
+   "source": "https://github.com/adoptium/jdk21u"
+  },
+  "vcruntime": {
+   "name": "Microsoft Visual C++ Redistributable (used by Ghostscript on Windows)",
+   "license": "Microsoft Visual C++ Redistributable license",
+   "url": "https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist",
+   "source": "n/a (binary redistributable)"
+  }
+ }
+}

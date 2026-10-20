@@ -1,0 +1,271 @@
+{
+ "_comment": "Delegate libraries linked into Magick.Native (ImageMagick) as named in the Notice.txt of the Magick.NET-Q8-AnyCPU NuGet package. generate_notices.py fails when Notice.txt names a library or version that is not listed here. Tags/commits were resolved with git ls-remote; the license column is the license each project declares.",
+ "components": {
+  "aom": {
+   "version": "3.15.1",
+   "repository": "https://aomedia.googlesource.com/aom",
+   "tag": "v3.15.1",
+   "commit": "44d0a57786f432d933ff64b653347c66f4d0fa1d",
+   "license": "BSD-2-Clause (with AOM patent license)"
+  },
+  "brotli": {
+   "version": "1.2.0",
+   "repository": "https://github.com/google/brotli",
+   "tag": "v1.2.0",
+   "commit": "028fb5a23661f123017c060daa546b55cf4bde29",
+   "license": "MIT"
+  },
+  "libbzip2": {
+   "version": "1.0.8",
+   "repository": "https://sourceware.org/git/bzip2.git",
+   "tag": "bzip2-1.0.8",
+   "commit": "6a8690fc8d26c815e798c588f796eabe9d684cf0",
+   "license": "bzip2-1.0.6"
+  },
+  "cairo": {
+   "version": "1.18.6",
+   "repository": "https://gitlab.freedesktop.org/cairo/cairo",
+   "tag": "1.18.6",
+   "commit": "018b3424a10ecd37450360f21454ecf0f3007e17",
+   "license": "LGPL-2.1-only OR MPL-1.1"
+  },
+  "libcroco": {
+   "version": "0.6.13",
+   "repository": "https://gitlab.gnome.org/Archive/libcroco",
+   "tag": "0.6.13",
+   "commit": "7e15ca6c2c29a4b78367e6efa6195b331a92b2a7",
+   "license": "LGPL-2.0-or-later"
+  },
+  "libde265": {
+   "version": "1.1.3",
+   "repository": "https://github.com/strukturag/libde265",
+   "tag": "v1.1.3",
+   "commit": "ba62bf4cfb3242f3bf0a45617ff09e35236e4d82",
+   "license": "LGPL-3.0-or-later"
+  },
+  "openexr": {
+   "version": "3.5.1",
+   "repository": "https://github.com/AcademySoftwareFoundation/openexr",
+   "tag": "v3.5.1",
+   "commit": "490f4cb496ac1db9f675dae7bad689f676a8256f",
+   "license": "BSD-3-Clause"
+  },
+  "libffi": {
+   "version": "3.8.0",
+   "repository": "https://github.com/libffi/libffi",
+   "tag": "v3.8.0",
+   "commit": "12ffd1f9dc56fcea79d2f742f424301ae668d663",
+   "license": "MIT"
+  },
+  "fontconfig": {
+   "version": "2.18.3",
+   "repository": "https://gitlab.freedesktop.org/fontconfig/fontconfig",
+   "tag": "2.18.3",
+   "commit": "0f236723a3c26bd9745e32ba2b3ee21e5f809295",
+   "license": "HPND-sell-variant (MIT-style)"
+  },
+  "freetype": {
+   "version": "2.14.3",
+   "repository": "https://gitlab.freedesktop.org/freetype/freetype",
+   "tag": "VER-2-14-3",
+   "commit": "0a0221a1347e2f1e07c395263540026e9a0aa7c7",
+   "license": "FreeType License (FTL) OR GPL-2.0-only; used under the FTL"
+  },
+  "fribidi": {
+   "version": "1.0.17",
+   "repository": "https://github.com/fribidi/fribidi",
+   "tag": "v1.0.17",
+   "commit": "b93119f5fdc7ea47672cc304c1455ffa6dfe7536",
+   "license": "LGPL-2.1-or-later"
+  },
+  "gdk-pixbuf": {
+   "version": "2.44.8",
+   "repository": "https://gitlab.gnome.org/GNOME/gdk-pixbuf",
+   "tag": "2.44.8",
+   "commit": "0bd66153abb6bd548febb82337db79cbefe694b0",
+   "license": "LGPL-2.1-or-later"
+  },
+  "glib": {
+   "version": "2.64.3",
+   "repository": "https://gitlab.gnome.org/GNOME/glib",
+   "tag": "2.64.3",
+   "commit": "af1edc1c338d9a8b2a99bdd0e6cc6bede51f40b4",
+   "license": "LGPL-2.1-or-later"
+  },
+  "harfbuzz": {
+   "version": "14.5.0",
+   "repository": "https://github.com/harfbuzz/harfbuzz",
+   "tag": "14.5.0",
+   "commit": "863d3f7787c6df18d20e4535c5906bf3eb803bd5",
+   "license": "MIT (Old MIT)"
+  },
+  "libheif": {
+   "version": "1.23.5",
+   "repository": "https://github.com/strukturag/libheif",
+   "tag": "v1.23.5",
+   "commit": "413e2a87e6a70b3eccc3a3adc5801179dd2d9e00",
+   "license": "LGPL-3.0-or-later"
+  },
+  "libhwy": {
+   "version": "1.4.0",
+   "repository": "https://github.com/google/highway",
+   "tag": "1.4.0",
+   "commit": "2607d3b5b0113992fe84d3848859eae13b3b52c1",
+   "license": "Apache-2.0 OR BSD-3-Clause"
+  },
+  "imath": {
+   "version": "3.2.3",
+   "repository": "https://github.com/AcademySoftwareFoundation/Imath",
+   "tag": "v3.2.3",
+   "commit": "5f27ba266d3ea1565e912570c30b5eafc89959f1",
+   "license": "BSD-3-Clause"
+  },
+  "libjpeg-turbo": {
+   "version": "3.2.0",
+   "repository": "https://github.com/libjpeg-turbo/libjpeg-turbo",
+   "tag": "3.2.0",
+   "commit": "c85e6b905bf237038faa936dab160ebfc5da0344",
+   "license": "IJG AND BSD-3-Clause AND Zlib"
+  },
+  "libjxl": {
+   "version": "0.12.0",
+   "repository": "https://github.com/libjxl/libjxl",
+   "tag": "v0.12.0",
+   "commit": "a7a9c787341cf703dede03c2009fa460cae5e5df",
+   "license": "BSD-3-Clause"
+  },
+  "lcms": {
+   "version": "2.19.1",
+   "repository": "https://github.com/mm2/Little-CMS",
+   "tag": "lcms2.19.1",
+   "commit": "21c582a594fe5279f90c0b93437c398f93bf62b0",
+   "license": "MIT"
+  },
+  "liblqr": {
+   "version": "0.4.2",
+   "repository": "https://github.com/carlobaldassi/liblqr",
+   "tag": "v0.4.2",
+   "commit": "c9ef563203780eb1dcd46cf9487c48a62a8aa994",
+   "license": "LGPL-3.0-or-later"
+  },
+  "liblzma": {
+   "version": "5.8.4",
+   "repository": "https://github.com/tukaani-project/xz",
+   "tag": "v5.8.4",
+   "commit": "d3e650e63c110e830fd5391e7f8b45df0b91d3da",
+   "license": "0BSD"
+  },
+  "openh264": {
+   "version": "2.6.0",
+   "repository": "https://github.com/cisco/openh264",
+   "tag": "v2.6.0",
+   "commit": "652bdb7719f30b52b08e506645a7322ff1b2cc6f",
+   "license": "BSD-2-Clause"
+  },
+  "openjpeg": {
+   "version": "2.5.4",
+   "repository": "https://github.com/uclouvain/openjpeg",
+   "tag": "v2.5.4",
+   "commit": "6c4a29b00211eb0430fa0e5e890f1ce5c80f409f",
+   "license": "BSD-2-Clause"
+  },
+  "openjph": {
+   "version": "0.32.0",
+   "repository": "https://github.com/aous72/OpenJPH",
+   "tag": "0.32.0",
+   "commit": "23c422895ce6c3a156935222e4715ee0b7be952c",
+   "license": "BSD-2-Clause"
+  },
+  "pango": {
+   "version": "1.45.3",
+   "repository": "https://gitlab.gnome.org/GNOME/pango",
+   "tag": "1.45.3",
+   "commit": "39080c4d55784091e6d265b9a04975a28cbbec7f",
+   "license": "LGPL-2.0-or-later"
+  },
+  "pixman": {
+   "version": "0.46.4",
+   "repository": "https://gitlab.freedesktop.org/pixman/pixman",
+   "tag": "pixman-0.46.4",
+   "commit": "9cc163c9da0fb4da430641715313d95a6ec466d9",
+   "license": "MIT"
+  },
+  "libpng": {
+   "version": "1.6.58",
+   "repository": "https://github.com/pnggroup/libpng",
+   "tag": "v1.6.58",
+   "commit": "3061454d980de7d53608f594194cfac722721d2a",
+   "license": "PNG Reference Library License v2"
+  },
+  "libraqm": {
+   "version": "0.11.0",
+   "repository": "https://github.com/HOST-Oman/libraqm",
+   "tag": "v0.11.0",
+   "commit": "08ee1537e63f93bf926498e12b12ed15ee383216",
+   "license": "MIT"
+  },
+  "libraw": {
+   "version": "0.22.2",
+   "repository": "https://github.com/LibRaw/LibRaw",
+   "tag": "0.22.2",
+   "commit": "b93f6e45c194f5df9b02a43b1af9a54b4f41f33f",
+   "license": "LGPL-2.1-only OR CDDL-1.0"
+  },
+  "librsvg": {
+   "version": "2.40.20",
+   "repository": "https://gitlab.gnome.org/GNOME/librsvg",
+   "tag": "2.40.20",
+   "commit": "2cbb0f7bf56666187993bd7ba688bf82d0c9a5c7",
+   "license": "LGPL-2.0-or-later"
+  },
+  "libtiff": {
+   "version": "4.7.2",
+   "repository": "https://gitlab.com/libtiff/libtiff",
+   "tag": "v4.7.2",
+   "commit": "d01a94be176f5f6a87f7ee1c0b32e65416aa2b4d",
+   "license": "libtiff (HPND-style)"
+  },
+  "libwebp": {
+   "version": "1.6.0",
+   "repository": "https://chromium.googlesource.com/webm/libwebp",
+   "tag": "v1.6.0",
+   "commit": "4fa21912338357f89e4fd51cf2368325b59e9bd9",
+   "license": "BSD-3-Clause"
+  },
+  "libxml2": {
+   "version": "2.15.4",
+   "repository": "https://gitlab.gnome.org/GNOME/libxml2",
+   "tag": "v2.15.4",
+   "commit": "96498992efa48d52b0e8b83058bd88dbdaf153c1",
+   "license": "MIT"
+  },
+  "libzip": {
+   "version": "1.11.4",
+   "repository": "https://github.com/nih-at/libzip",
+   "tag": "v1.11.4",
+   "commit": "6f8a0cdd24a0dc6cce9dac4a7679da784ab124ea",
+   "license": "BSD-3-Clause"
+  },
+  "zlib": {
+   "version": "1.3.2",
+   "repository": "https://github.com/madler/zlib",
+   "tag": "v1.3.2",
+   "commit": "da607da739fa6047df13e66a2af6b8bec7c2a498",
+   "license": "Zlib"
+  },
+  "zstd": {
+   "version": "1.5.7",
+   "repository": "https://github.com/facebook/zstd",
+   "tag": "v1.5.7",
+   "commit": "f8745da6ff1ad1e7bab384bd1f9d742439278e99",
+   "license": "BSD-3-Clause OR GPL-2.0-only; used under BSD-3-Clause"
+  },
+  "ImageMagick": {
+   "version": "7.1.2-32",
+   "repository": "https://github.com/ImageMagick/ImageMagick",
+   "tag": "7.1.2-32",
+   "commit": "ad98b244c995d2e3051757fa3b7855f45b550d24",
+   "license": "ImageMagick License (Apache-2.0 style)"
+  }
+ }
+}
