@@ -45,7 +45,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y build-essential pkg-config git ${{ matrix.rid == 'linux-arm64' && github.event.repository.private && 'gcc-aarch64-linux-gnu' || '' }}
+          sudo apt-get install -y build-essential pkg-config git ${{ matrix.rid == 'linux-arm64' && github.event.repository.private && 'gcc-aarch64-linux-gnu libc6-dev-arm64-cross' || '' }}
           if ! command -v rustup >/dev/null; then
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain none
             echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
