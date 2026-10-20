@@ -234,6 +234,9 @@ they are on your `PATH`, `{exe}` finds them.
 LINUX_NOTE = """
 Linux needs the system libraries .NET itself needs, e.g. on Ubuntu 22.04:
 `sudo apt-get install -y ca-certificates libc6 libgcc-s1 libicu70 libssl3 libstdc++6 tzdata zlib1g`
+
+HWP/HWPX to PDF (rhwp) draws text with fonts installed on the computer; it embeds none. Install a Korean font
+(for example `fonts-noto-cjk`) or Hangul will not render. The release tests ran with `fonts-noto-cjk`.
 """
 
 
