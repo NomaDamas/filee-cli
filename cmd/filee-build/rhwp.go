@@ -148,6 +148,7 @@ type engineComponent struct {
 	URL     string `json:"url"`
 	Sha256  string `json:"sha256"`
 	Kind    string `json:"kind"`
+	Size    int64  `json:"size"`
 }
 
 func readEnginesManifest() (enginesManifest, error) {

@@ -1,0 +1,2154 @@
+{
+  "engine": "ffmpeg",
+  "name": "FFmpeg (BtbN GPL builds)",
+  "license": "GPL-3.0-or-later",
+  "license_note": "Built with the BtbN 'gpl' variant: --enable-gpl --enable-version3 (confirmed by the shipped binaries' configuration string and by variants/defaults-gpl.sh LICENSE_FILE=COPYING.GPLv3), so the whole program is GPL-3.0-or-later.",
+  "binaries": {
+    "linux-x64": {
+      "version": "n9.0.2-17-g2a571b6068",
+      "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-09-30-13-08/ffmpeg-n9.0.2-17-g2a571b6068-linux64-gpl-9.0.tar.xz",
+      "sha256": "68ee646831adaae2495618346f3bba94ff207ff83bbd34d643e7004730d66269",
+      "size": 151017172,
+      "archive_root": "ffmpeg-n9.0.2-17-g2a571b6068-linux64-gpl-9.0",
+      "bin": [
+        "ffmpeg",
+        "ffprobe",
+        "ffplay"
+      ]
+    },
+    "linux-arm64": {
+      "version": "n9.0.2-17-g2a571b6068",
+      "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-09-30-13-08/ffmpeg-n9.0.2-17-g2a571b6068-linuxarm64-gpl-9.0.tar.xz",
+      "sha256": "91afcd7695d4bbbb9e0057aa10baaf9875ec4e1a97303f9059ec971336a2ab46",
+      "size": 127445692,
+      "archive_root": "ffmpeg-n9.0.2-17-g2a571b6068-linuxarm64-gpl-9.0",
+      "bin": [
+        "ffmpeg",
+        "ffprobe",
+        "ffplay"
+      ]
+    },
+    "win-x64": {
+      "version": "n9.0.2-17-g2a571b6068",
+      "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-09-30-13-08/ffmpeg-n9.0.2-17-g2a571b6068-win64-gpl-9.0.zip",
+      "sha256": "a0e45723c72141975f51d8666302e614711745f3102b704ca3f82c897a58d278",
+      "size": 194034585,
+      "archive_root": "ffmpeg-n9.0.2-17-g2a571b6068-win64-gpl-9.0",
+      "bin": [
+        "ffmpeg.exe",
+        "ffprobe.exe",
+        "ffplay.exe"
+      ],
+      "note": "Replaces the previous Gyan.dev ffmpeg-9.0.2-full_build-shared.zip entry in engines.json with the BtbN GPL build from the same release tag."
+    }
+  },
+  "binaries_note": "sha256/size computed locally by downloading each archive (win64 zip 194034585 bytes hashed a0e45723..., matching the GitHub release asset digest sha256:a0e45723c72141975f51d8666302e614711745f3102b704ca3f82c897a58d278).",
+  "buildconf_check": {
+    "method": "'configuration:' string of each shipped binary (ffmpeg -buildconf run under 'docker run --platform linux/arm64|amd64 ubuntu:22.04' for the two linux builds, 'strings ffmpeg.exe' for win-x64) compared against the source entries.",
+    "result": "every --enable-lib*/--enable-* flag that corresponds to a bundled library has a matching source entry; no mismatches.",
+    "mismatches": [],
+    "enable_flags": {
+      "linux-x64": [
+        "--enable-amf",
+        "--enable-avisynth",
+        "--enable-chromaprint",
+        "--enable-cuda-llvm",
+        "--enable-ffnvcodec",
+        "--enable-fontconfig",
+        "--enable-frei0r",
+        "--enable-gmp",
+        "--enable-gpl",
+        "--enable-iconv",
+        "--enable-libaom",
+        "--enable-libaribb24",
+        "--enable-libaribcaption",
+        "--enable-libass",
+        "--enable-libbluray",
+        "--enable-libdav1d",
+        "--enable-libdavs2",
+        "--enable-libdrm",
+        "--enable-libdvdnav",
+        "--enable-libdvdread",
+        "--enable-libfreetype",
+        "--enable-libfribidi",
+        "--enable-libgme",
+        "--enable-libharfbuzz",
+        "--enable-libjxl",
+        "--enable-libkvazaar",
+        "--enable-liblcevc-dec",
+        "--enable-libmp3lame",
+        "--enable-liboapv",
+        "--enable-libopencore-amrnb",
+        "--enable-libopencore-amrwb",
+        "--enable-libopenh264",
+        "--enable-libopenjpeg",
+        "--enable-libopenmpt",
+        "--enable-libopus",
+        "--enable-libplacebo",
+        "--enable-libpulse",
+        "--enable-librav1e",
+        "--enable-librist",
+        "--enable-librsvg",
+        "--enable-librubberband",
+        "--enable-libsnappy",
+        "--enable-libsoxr",
+        "--enable-libsrt",
+        "--enable-libssh",
+        "--enable-libsvtav1",
+        "--enable-libtheora",
+        "--enable-libtwolame",
+        "--enable-libuavs3d",
+        "--enable-libvidstab",
+        "--enable-libvmaf",
+        "--enable-libvorbis",
+        "--enable-libvpl",
+        "--enable-libvpx",
+        "--enable-libvvenc",
+        "--enable-libwebp",
+        "--enable-libx264",
+        "--enable-libx265",
+        "--enable-libxavs2",
+        "--enable-libxcb",
+        "--enable-libxml2",
+        "--enable-libxvid",
+        "--enable-libzimg",
+        "--enable-libzmq",
+        "--enable-libzvbi",
+        "--enable-lv2",
+        "--enable-lzma",
+        "--enable-openal",
+        "--enable-opencl",
+        "--enable-openssl",
+        "--enable-sdl2",
+        "--enable-vaapi",
+        "--enable-version3",
+        "--enable-vulkan",
+        "--enable-xlib",
+        "--enable-zlib"
+      ],
+      "linux-arm64": [
+        "--enable-amf",
+        "--enable-avisynth",
+        "--enable-chromaprint",
+        "--enable-cuda-llvm",
+        "--enable-ffnvcodec",
+        "--enable-fontconfig",
+        "--enable-frei0r",
+        "--enable-gmp",
+        "--enable-gpl",
+        "--enable-iconv",
+        "--enable-libaom",
+        "--enable-libaribb24",
+        "--enable-libaribcaption",
+        "--enable-libass",
+        "--enable-libbluray",
+        "--enable-libdav1d",
+        "--enable-libdrm",
+        "--enable-libdvdnav",
+        "--enable-libdvdread",
+        "--enable-libfreetype",
+        "--enable-libfribidi",
+        "--enable-libgme",
+        "--enable-libharfbuzz",
+        "--enable-libjxl",
+        "--enable-libkvazaar",
+        "--enable-liblcevc-dec",
+        "--enable-libmp3lame",
+        "--enable-liboapv",
+        "--enable-libopencore-amrnb",
+        "--enable-libopencore-amrwb",
+        "--enable-libopenh264",
+        "--enable-libopenjpeg",
+        "--enable-libopenmpt",
+        "--enable-libopus",
+        "--enable-libplacebo",
+        "--enable-libpulse",
+        "--enable-librav1e",
+        "--enable-librist",
+        "--enable-librsvg",
+        "--enable-librubberband",
+        "--enable-libsnappy",
+        "--enable-libsoxr",
+        "--enable-libsrt",
+        "--enable-libssh",
+        "--enable-libsvtav1",
+        "--enable-libtheora",
+        "--enable-libtwolame",
+        "--enable-libuavs3d",
+        "--enable-libvidstab",
+        "--enable-libvmaf",
+        "--enable-libvorbis",
+        "--enable-libvpx",
+        "--enable-libvvenc",
+        "--enable-libwebp",
+        "--enable-libx264",
+        "--enable-libx265",
+        "--enable-libxcb",
+        "--enable-libxml2",
+        "--enable-libxvid",
+        "--enable-libzimg",
+        "--enable-libzmq",
+        "--enable-libzvbi",
+        "--enable-lv2",
+        "--enable-lzma",
+        "--enable-openal",
+        "--enable-opencl",
+        "--enable-openssl",
+        "--enable-sdl2",
+        "--enable-vaapi",
+        "--enable-version3",
+        "--enable-vulkan",
+        "--enable-xlib",
+        "--enable-zlib"
+      ],
+      "win-x64": [
+        "--enable-amf",
+        "--enable-avisynth",
+        "--enable-chromaprint",
+        "--enable-cuda-llvm",
+        "--enable-ffnvcodec",
+        "--enable-fontconfig",
+        "--enable-frei0r",
+        "--enable-gmp",
+        "--enable-gpl",
+        "--enable-iconv",
+        "--enable-libaom",
+        "--enable-libaribb24",
+        "--enable-libaribcaption",
+        "--enable-libass",
+        "--enable-libbluray",
+        "--enable-libdav1d",
+        "--enable-libdavs2",
+        "--enable-libdvdnav",
+        "--enable-libdvdread",
+        "--enable-libfreetype",
+        "--enable-libfribidi",
+        "--enable-libgme",
+        "--enable-libharfbuzz",
+        "--enable-libjxl",
+        "--enable-libkvazaar",
+        "--enable-liblcevc-dec",
+        "--enable-libmp3lame",
+        "--enable-liboapv",
+        "--enable-libopencore-amrnb",
+        "--enable-libopencore-amrwb",
+        "--enable-libopenh264",
+        "--enable-libopenjpeg",
+        "--enable-libopenmpt",
+        "--enable-libopus",
+        "--enable-libplacebo",
+        "--enable-librav1e",
+        "--enable-librist",
+        "--enable-librsvg",
+        "--enable-librubberband",
+        "--enable-libsnappy",
+        "--enable-libsoxr",
+        "--enable-libsrt",
+        "--enable-libssh",
+        "--enable-libsvtav1",
+        "--enable-libtheora",
+        "--enable-libtwolame",
+        "--enable-libuavs3d",
+        "--enable-libvidstab",
+        "--enable-libvmaf",
+        "--enable-libvorbis",
+        "--enable-libvpl",
+        "--enable-libvpx",
+        "--enable-libvvenc",
+        "--enable-libwebp",
+        "--enable-libx264",
+        "--enable-libx265",
+        "--enable-libxavs2",
+        "--enable-libxml2",
+        "--enable-libxvid",
+        "--enable-libzimg",
+        "--enable-libzmq",
+        "--enable-libzvbi",
+        "--enable-lv2",
+        "--enable-lzma",
+        "--enable-openal",
+        "--enable-opencl",
+        "--enable-pthreads",
+        "--enable-schannel",
+        "--enable-sdl2",
+        "--enable-vaapi",
+        "--enable-version3",
+        "--enable-vulkan",
+        "--enable-zlib"
+      ]
+    },
+    "disable_flags": {
+      "linux-x64": [
+        "--disable-debug",
+        "--disable-libfdk-aac",
+        "--disable-schannel",
+        "--disable-whisper"
+      ],
+      "linux-arm64": [
+        "--disable-debug",
+        "--disable-libdavs2",
+        "--disable-libfdk-aac",
+        "--disable-libvpl",
+        "--disable-libxavs2",
+        "--disable-schannel",
+        "--disable-whisper"
+      ],
+      "win-x64": [
+        "--disable-debug",
+        "--disable-libdrm",
+        "--disable-libfdk-aac",
+        "--disable-libpulse",
+        "--disable-libxcb",
+        "--disable-w32threads",
+        "--disable-whisper",
+        "--disable-xlib"
+      ]
+    }
+  },
+  "host_source": true,
+  "build_recipe": "https://github.com/BtbN/FFmpeg-Builds at commit 6c9aec5fc9a72ec3abedd1fa84db141fa18cf52b (the release tag autobuild-2026-09-30-13-08 points at this commit; the 'Build FFmpeg' workflow run 36713993443 that produced this release had head_sha 6c9aec5fc9a72ec3abedd1fa84db141fa18cf52b). Recipe: build.sh + generate.sh + variants/{linux64,linuxarm64,win64}-gpl.sh + variants/defaults-gpl.sh + variants/{linux,windows}-install-static.sh + scripts.d/**/*.sh + addins/9.0.sh (GIT_BRANCH=release/9.0) + patches/ + images/ (base containers).",
+  "sources": [
+    {
+      "name": "AMF",
+      "version": "6277e35",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://github.com/GPUOpen-LibrariesAndSDKs/AMF.git",
+      "ref": "6277e353fd625121a8f627b1d0540323ef372a49",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE.txt = MIT text preceded by an AMD standards notice."
+    },
+    {
+      "name": "aom",
+      "version": "b4ce2cd",
+      "license": "BSD-2-Clause",
+      "kind": "git",
+      "url": "https://aomedia.googlesource.com/aom",
+      "ref": "b4ce2cd097b00921b0327bfb5f07b5f8361ade99",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = BSD-2-Clause (Alliance for Open Media); the separate PATENTS file carries the AOM patent license."
+    },
+    {
+      "name": "avisynth",
+      "version": "5c82777",
+      "license": "GPL-2.0-or-later",
+      "kind": "git",
+      "url": "https://github.com/AviSynth/AviSynthPlus.git",
+      "ref": "5c82777b374bdef16e13007a11e77d735ac1e4eb",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). No root LICENSE file; source headers (e.g. avs_core/core/cache.cpp) state GPLv2 or later."
+    },
+    {
+      "name": "brotli",
+      "version": "a3abcbe",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://github.com/google/brotli.git",
+      "ref": "a3abcbee0d945e51dddeec81e647ffe0cde182c2",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = MIT."
+    },
+    {
+      "name": "cairo",
+      "version": "7475596",
+      "license": "LGPL-2.1-only OR MPL-1.1",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/cairo/cairo.git",
+      "ref": "74755964edef651691d5cd36ff140108298e4e6e",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING states LGPL-2.1 or MPL-1.1 at the user's option."
+    },
+    {
+      "name": "chromaprint",
+      "version": "aed8eba",
+      "license": "LGPL-2.1-or-later",
+      "kind": "git",
+      "url": "https://github.com/acoustid/chromaprint.git",
+      "ref": "aed8eba2202dd9d7b3b0a56c77904cc805490d72",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE.md: own code MIT but bundled FFmpeg parts are LGPL-2.1, so the library as a whole is LGPL-2.1+."
+    },
+    {
+      "name": "dav1d",
+      "version": "9711965",
+      "license": "BSD-2-Clause",
+      "kind": "git",
+      "url": "https://code.videolan.org/videolan/dav1d.git",
+      "ref": "9711965b60bb692ae24004659acf61f5c7d9ed61",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = BSD-2-Clause."
+    },
+    {
+      "name": "davs2",
+      "version": "b41cf11",
+      "license": "GPL-2.0-or-later",
+      "kind": "git",
+      "url": "https://github.com/pkuvcl/davs2.git",
+      "ref": "b41cf117452e2d73d827f02d3e30aa20f1c721ac",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "win-x64"
+      ],
+      "note": "linux-x64 and win-x64 only (not linux-arm64). COPYING = GPLv2; sources grant 'or (at your option) any later version'."
+    },
+    {
+      "name": "ffmpeg",
+      "version": "n9.0.2-17-g2a571b6068",
+      "license": "GPL-3.0-or-later",
+      "kind": "git",
+      "url": "https://github.com/FFmpeg/FFmpeg.git",
+      "ref": "2a571b606854520cf89804d8030c8b328e621689",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). FFmpeg itself; built from branch release/9.0 with variant gpl (--enable-gpl --enable-version3). The shipped binary's configuration string confirms commit 2a571b6068."
+    },
+    {
+      "name": "fftw3",
+      "version": "93ed4c7",
+      "license": "GPL-2.0-or-later",
+      "kind": "git",
+      "url": "https://github.com/FFTW/fftw3.git",
+      "ref": "93ed4c786934aec9946f8dda4b4e3eb08f8be41c",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = GPLv2; FFTW headers grant 'either version 2 ... or (at your option) any later version'."
+    },
+    {
+      "name": "fontconfig",
+      "version": "bd8f7b5",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/fontconfig/fontconfig.git",
+      "ref": "bd8f7b597de96761750d0365abb49b19d2f8d5c3",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = MIT-style text agreed on by the fontconfig contributors."
+    },
+    {
+      "name": "freetype",
+      "version": "d333439",
+      "license": "FTL OR GPL-2.0-or-later",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/freetype/freetype.git",
+      "ref": "d333439633039de426f943f28a2926c7f97b5ae5",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE.TXT = FreeType License (FTL) or GPLv2."
+    },
+    {
+      "name": "frei0r",
+      "version": "4c95b2a",
+      "license": "GPL-2.0-or-later",
+      "kind": "git",
+      "url": "https://github.com/dyne/frei0r.git",
+      "ref": "4c95b2a02b2d03c71d5f6d7980d16c99acfd5a5f",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = GPLv2."
+    },
+    {
+      "name": "fribidi",
+      "version": "4c914a9",
+      "license": "LGPL-2.1-or-later",
+      "kind": "git",
+      "url": "https://github.com/fribidi/fribidi.git",
+      "ref": "4c914a92e94a9fe4f30ae83a1130099841566448",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = LGPL-2.1."
+    },
+    {
+      "name": "game-music-emu",
+      "version": "f68963b",
+      "license": "LGPL-2.1-or-later",
+      "kind": "git",
+      "url": "https://github.com/libgme/game-music-emu.git",
+      "ref": "f68963b1de0633149b05732113d3c3113c6f63a1",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). license.txt = LGPL-2.1."
+    },
+    {
+      "name": "glib",
+      "version": "5a124d1",
+      "license": "LGPL-2.1-or-later",
+      "kind": "git",
+      "url": "https://github.com/GNOME/glib.git",
+      "ref": "5a124d1e66a6c2dc56989303b4d6d4781c2952ed",
+      "submodules": true,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING points at LICENSES/LGPL-2.1-or-later.txt; script initialises recursive submodules."
+    },
+    {
+      "name": "gmp",
+      "version": "763b40d",
+      "license": "LGPL-3.0-or-later",
+      "kind": "git",
+      "url": "https://github.com/BtbN/gmplib.git",
+      "ref": "763b40df71c0f4d5f5d7b33dc55038c8c9377ecf",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). GMP fork used by BtbN; COPYING.LESSERv3 contains the LGPLv3 text (GMP is dual LGPLv3+/GPLv2+)."
+    },
+    {
+      "name": "gnulib",
+      "version": "eb72eb6",
+      "license": "LGPL-2.1-or-later",
+      "kind": "git",
+      "url": "https://git.savannah.gnu.org/git/gnulib.git",
+      "ref": "eb72eb6f75f5621c5d648acd11467fd124584617",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). Only the gnulib modules vendored into libiconv are used; gnulib's own COPYING states files are under assorted licenses, mostly GPL/LGPL, stated per file.",
+      "mirrors": [
+        "https://github.com/coreutils/gnulib"
+      ]
+    },
+    {
+      "name": "harfbuzz",
+      "version": "b3bab62",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://github.com/harfbuzz/harfbuzz.git",
+      "ref": "b3bab62307017934dd7f532c52a696fefb12b3ad",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = 'Old MIT' license."
+    },
+    {
+      "name": "kvazaar",
+      "version": "2b06691",
+      "license": "BSD-3-Clause",
+      "kind": "git",
+      "url": "https://github.com/ultravideo/kvazaar.git",
+      "ref": "2b06691bb5844404c0e703f12a5d7b0fee914ec7",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = BSD-3-Clause."
+    },
+    {
+      "name": "lame",
+      "version": "r6835",
+      "license": "LGPL-2.0-or-later",
+      "kind": "svn",
+      "url": "https://svn.code.sf.net/p/lame/svn/trunk/lame",
+      "ref": "6835",
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). include/lame.h states 'GNU Library General Public License ... either version 2 of the License, or (at your option) any later version'; COPYING = GNU Library GPL v2."
+    },
+    {
+      "name": "LCEVCdec",
+      "version": "17804ac",
+      "license": "BSD-3-Clause-Clear",
+      "kind": "git",
+      "url": "https://github.com/v-novaltd/LCEVCdec.git",
+      "ref": "17804ac54db8fbb42717f3275b1e73f3c0b067d3",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE.md = 'The Clear BSD License' (BSD-3-Clause-Clear)."
+    },
+    {
+      "name": "lcms2",
+      "version": "a0b0d7a",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://github.com/mm2/Little-CMS.git",
+      "ref": "a0b0d7a69b13b461bdbd9cff9f7f1d59ccd1858c",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = MIT."
+    },
+    {
+      "name": "libaribb24",
+      "version": "5e9be27",
+      "license": "LGPL-3.0-or-later",
+      "kind": "git",
+      "url": "https://github.com/nkoriyama/aribb24.git",
+      "ref": "5e9be272f96e00f15a2f3c5f8ba7e124862aec38",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = LGPLv3; sources grant 'or (at your option) any later version'."
+    },
+    {
+      "name": "libaribcaption",
+      "version": "c64c23b",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://github.com/xqq/libaribcaption.git",
+      "ref": "c64c23b8905ba514b87c9789269e9f66f949ffe0",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = MIT."
+    },
+    {
+      "name": "libass",
+      "version": "f61db56",
+      "license": "ISC",
+      "kind": "git",
+      "url": "https://github.com/libass/libass.git",
+      "ref": "f61db567e6593df3470e91594bcd4ad2d0473aff",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = ISC."
+    },
+    {
+      "name": "libbluray",
+      "version": "a24f4fa",
+      "license": "LGPL-2.1-or-later",
+      "kind": "git",
+      "url": "https://code.videolan.org/videolan/libbluray.git",
+      "ref": "a24f4fad4d62893de647abc8671397747b2359dd",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = LGPL-2.1."
+    },
+    {
+      "name": "libdrm",
+      "version": "b97cbde",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/mesa/drm.git",
+      "ref": "b97cbde15c5c3abfe44d78e8f57139e50f612fec",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). LICENSES/MIT.txt = MIT; libdrm is MIT-licensed per file headers."
+    },
+    {
+      "name": "libdvdcss",
+      "version": "811ce97",
+      "license": "GPL-2.0-or-later",
+      "kind": "git",
+      "url": "https://code.videolan.org/videolan/libdvdcss.git",
+      "ref": "811ce97a1d4d1c9d936f4b2707f533a9ef768251",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = GPLv2."
+    },
+    {
+      "name": "libdvdnav",
+      "version": "8147ccd",
+      "license": "GPL-2.0-or-later",
+      "kind": "git",
+      "url": "https://code.videolan.org/videolan/libdvdnav.git",
+      "ref": "8147ccd35e5aae4afdd21171cf7b6b4d8f179d28",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = GPLv2."
+    },
+    {
+      "name": "libdvdread",
+      "version": "0f30df5",
+      "license": "GPL-2.0-or-later",
+      "kind": "git",
+      "url": "https://code.videolan.org/videolan/libdvdread.git",
+      "ref": "0f30df53125b564ef45903714403ce0a1e6c5e9e",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = GPLv2."
+    },
+    {
+      "name": "libffi",
+      "version": "bc55386",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://github.com/libffi/libffi.git",
+      "ref": "bc553867367246d140cd156f060bd0409f57f157",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = MIT-style permissive text."
+    },
+    {
+      "name": "libglvnd",
+      "version": "c046a76",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/glvnd/libglvnd.git",
+      "ref": "c046a760d845416e98ac4128757b2b356c47fdaa",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). README.md 'libglvnd' section = NVIDIA MIT text."
+    },
+    {
+      "name": "libiconv",
+      "version": "1df3087",
+      "license": "LGPL-2.1-or-later",
+      "kind": "git",
+      "url": "https://git.savannah.gnu.org/git/libiconv.git",
+      "ref": "1df3087ba8110c7f3ed3eb5f8869b814dbbe00b0",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING is the GPLv3 text for the programs; the library itself is LGPL-2.1-or-later (see COPYING.LIB in the same tree). The commit hash fixes the tree: git.savannah.gnu.org was unreachable from the build host, so the same commit is fetched from the GitHub mirrors listed in mirrors (tree 1df3087 = Software Heritage directory c997cb027e7f97f99d10bb15060d68107819701d).",
+      "mirrors": [
+        "https://github.com/frida/libiconv",
+        "https://github.com/arthenica/libiconv",
+        "https://github.com/lsq/libiconv"
+      ]
+    },
+    {
+      "name": "libjxl",
+      "version": "b877389",
+      "license": "BSD-3-Clause",
+      "kind": "git",
+      "url": "https://github.com/libjxl/libjxl.git",
+      "ref": "b87738951c1254cd8cccaa6d47712ba735da56d8",
+      "submodules": true,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = BSD-3-Clause; script initialises the third_party/highway submodule."
+    },
+    {
+      "name": "libpciaccess",
+      "version": "38e6f15",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/xorg/lib/libpciaccess.git",
+      "ref": "38e6f15f839fba2c49982e7ad61cde681fd5d4d6",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). COPYING = MIT/X11-style permissive text."
+    },
+    {
+      "name": "libplacebo",
+      "version": "e2972fd",
+      "license": "LGPL-2.1-or-later",
+      "kind": "git",
+      "url": "https://code.videolan.org/videolan/libplacebo.git",
+      "ref": "e2972fdd09adacd383656738d7d280f0cd84a761",
+      "submodules": true,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = LGPL-2.1; script initialises recursive submodules."
+    },
+    {
+      "name": "libpng",
+      "version": "964b413",
+      "license": "libpng-2.0",
+      "kind": "git",
+      "url": "https://github.com/glennrp/libpng.git",
+      "ref": "964b4135949703b705fc760fc3fb546b86e5ab47",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE.md = PNG Reference Library License version 2 (SPDX libpng-2.0)."
+    },
+    {
+      "name": "libpsl",
+      "version": "a629c83",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://github.com/rockdaboot/libpsl.git",
+      "ref": "a629c831d09011f76974d931be7f6167be90673e",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = MIT."
+    },
+    {
+      "name": "librist",
+      "version": "4f45ef8",
+      "license": "BSD-2-Clause",
+      "kind": "git",
+      "url": "https://code.videolan.org/rist/librist.git",
+      "ref": "4f45ef8f78983892d52ccd52d9f675435b23738f",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = BSD-2-Clause."
+    },
+    {
+      "name": "librsvg",
+      "version": "7612431",
+      "license": "LGPL-2.1-or-later",
+      "kind": "git",
+      "url": "https://github.com/GNOME/librsvg.git",
+      "ref": "7612431eb02dc009319094f8513d63c1faaecfb4",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING.LIB = LGPL-2.1."
+    },
+    {
+      "name": "libsamplerate",
+      "version": "0844c20",
+      "license": "BSD-2-Clause",
+      "kind": "git",
+      "url": "https://github.com/libsndfile/libsamplerate.git",
+      "ref": "0844c208f683527c08ea8a80acc13b398aa9c8bf",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = BSD-2-Clause."
+    },
+    {
+      "name": "libssh",
+      "version": "76e0a86",
+      "license": "LGPL-2.1-or-later",
+      "kind": "git",
+      "url": "https://gitlab.com/libssh/libssh-mirror.git",
+      "ref": "76e0a8639e61436c28d877586f65a7707edc6ee5",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = LGPL-2.1; the BSD file covers a few specific files only."
+    },
+    {
+      "name": "libtheora",
+      "version": "28fd5ec",
+      "license": "BSD-3-Clause",
+      "kind": "git",
+      "url": "https://github.com/xiph/theora.git",
+      "ref": "28fd5ec77f0ad0e07a371cef1047828116f6bd8a",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = BSD-3-Clause."
+    },
+    {
+      "name": "libudfread",
+      "version": "b0bc695",
+      "license": "LGPL-2.1-or-later",
+      "kind": "git",
+      "url": "https://code.videolan.org/videolan/libudfread.git",
+      "ref": "b0bc6957e7e07d5f35391f210596d9eb71cffdd9",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = LGPL-2.1."
+    },
+    {
+      "name": "libunibreak",
+      "version": "28a2756",
+      "license": "Zlib",
+      "kind": "git",
+      "url": "https://github.com/adah1972/libunibreak.git",
+      "ref": "28a2756b864c343f438cd22537d49d394d4666a5",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENCE = zlib license."
+    },
+    {
+      "name": "libva",
+      "version": "6b07f71",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://github.com/intel/libva.git",
+      "ref": "6b07f7100512817f736967e899b8c26313c20623",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = MIT."
+    },
+    {
+      "name": "libvpl",
+      "version": "674d015",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://github.com/intel/libvpl.git",
+      "ref": "674d015bcb294bc39fa276e99a652ea045423e82",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "win-x64"
+      ],
+      "note": "linux-x64 and win-x64 only (not linux-arm64). LICENSE = MIT."
+    },
+    {
+      "name": "libvpx",
+      "version": "5e680f3",
+      "license": "BSD-3-Clause",
+      "kind": "git",
+      "url": "https://chromium.googlesource.com/webm/libvpx",
+      "ref": "5e680f30801d03c21078f8c4b772464752516211",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = BSD-3-Clause; PATENTS file carries the additional patent grant."
+    },
+    {
+      "name": "libwebp",
+      "version": "5c168cd",
+      "license": "BSD-3-Clause",
+      "kind": "git",
+      "url": "https://chromium.googlesource.com/webm/libwebp",
+      "ref": "5c168cd23b1872969c38e34b01b04dcf29849288",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = BSD-3-Clause; PATENTS file carries the additional patent grant."
+    },
+    {
+      "name": "libx11",
+      "version": "13f9b8d",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/xorg/lib/libx11.git",
+      "ref": "13f9b8de400335f4b86bb0672da02f8166c0e796",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). COPYING = MIT/X11-style permissive text (X.Org)."
+    },
+    {
+      "name": "libxau",
+      "version": "be1daeb",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/xorg/lib/libxau.git",
+      "ref": "be1daeb909f1d678e7859ac1555e90b4e768d5c4",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). COPYING = MIT/X11-style permissive text (X.Org)."
+    },
+    {
+      "name": "libxcb",
+      "version": "d4e07ba",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/xorg/lib/libxcb.git",
+      "ref": "d4e07bab5729c7d7cc3d2b95568cd9a661a53c4f",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). COPYING = MIT/X11-style permissive text (X.Org)."
+    },
+    {
+      "name": "libxcursor",
+      "version": "15efad7",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/xorg/lib/libxcursor.git",
+      "ref": "15efad7ccd035f5d1ddc8d437e047569d1775fa7",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). COPYING = MIT/X11-style permissive text (X.Org)."
+    },
+    {
+      "name": "libxext",
+      "version": "508f8ad",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/xorg/lib/libxext.git",
+      "ref": "508f8adca2540ff8926ac8456cb1c553a8caae76",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). COPYING = MIT/X11-style permissive text (X.Org)."
+    },
+    {
+      "name": "libxfixes",
+      "version": "55bb2d1",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/xorg/lib/libxfixes.git",
+      "ref": "55bb2d1d57d43e0595ce45393f26eb433d75a7cc",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). COPYING = MIT/X11-style permissive text (X.Org)."
+    },
+    {
+      "name": "libxi",
+      "version": "3a0adab",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/xorg/lib/libxi.git",
+      "ref": "3a0adabd16d8bf19c772061ad67f25c51281edf3",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). COPYING = MIT/X11-style permissive text (X.Org)."
+    },
+    {
+      "name": "libxinerama",
+      "version": "d7162b9",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/xorg/lib/libxinerama.git",
+      "ref": "d7162b962710bc724b41cabab4e7cea303c4b541",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). COPYING = MIT/X11-style permissive text (X.Org)."
+    },
+    {
+      "name": "libxml2",
+      "version": "91586dc",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://github.com/GNOME/libxml2.git",
+      "ref": "91586dc6742ab335682235120363f6e126eea5e2",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). Copyright file = MIT (Daniel Veillard)."
+    },
+    {
+      "name": "libxrandr",
+      "version": "8a4ba19",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/xorg/lib/libxrandr.git",
+      "ref": "8a4ba1974bcf07057cf891128d86ae1ab5303574",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). COPYING = MIT/X11-style permissive text (X.Org)."
+    },
+    {
+      "name": "libxrender",
+      "version": "f32afe9",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/xorg/lib/libxrender.git",
+      "ref": "f32afe9f877ae032c6bc9c27b17b7978b1b4c856",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). COPYING = MIT/X11-style permissive text (X.Org)."
+    },
+    {
+      "name": "libxscrnsaver",
+      "version": "3f753e7",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/xorg/lib/libxscrnsaver.git",
+      "ref": "3f753e7a4050db083474444ae91cc17a849eaa4d",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). COPYING = MIT/X11-style permissive text (X.Org)."
+    },
+    {
+      "name": "libxtrans",
+      "version": "79f6b0b",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/xorg/lib/libxtrans.git",
+      "ref": "79f6b0bfe2170496e8c37626043d009f4cd3f1e1",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). COPYING = MIT/X11-style permissive text (X.Org)."
+    },
+    {
+      "name": "libxv",
+      "version": "f315ec5",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/xorg/lib/libxv.git",
+      "ref": "f315ec50fcad9bdbaed46c3e78dc5e7fe209f933",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). COPYING = MIT/X11-style permissive text (X.Org)."
+    },
+    {
+      "name": "libxxf86vm",
+      "version": "c76fde6",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/xorg/lib/libxxf86vm.git",
+      "ref": "c76fde6bffcc87e5dd98d8196bb01a299bdc3236",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). COPYING = MIT/X11-style permissive text (X.Org)."
+    },
+    {
+      "name": "libzmq",
+      "version": "4649337",
+      "license": "MPL-2.0",
+      "kind": "git",
+      "url": "https://github.com/zeromq/libzmq.git",
+      "ref": "46493370217ac135246617fa2f6ac819d8b61bfc",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = MPL-2.0."
+    },
+    {
+      "name": "lilv",
+      "version": "4b8f300",
+      "license": "ISC",
+      "kind": "git",
+      "url": "https://github.com/lv2/lilv.git",
+      "ref": "4b8f30055fa5cb4134a2eb45fc1555bc04289314",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = ISC."
+    },
+    {
+      "name": "lv2",
+      "version": "3c57dae",
+      "license": "ISC",
+      "kind": "git",
+      "url": "https://github.com/lv2/lv2.git",
+      "ref": "3c57dae600a5ad8d05acd53ee3490f7d91cb7be6",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = ISC."
+    },
+    {
+      "name": "mbedtls",
+      "version": "v4.2.0",
+      "license": "Apache-2.0 OR GPL-2.0-or-later",
+      "kind": "git",
+      "url": "https://github.com/ARMmbed/mbedtls.git",
+      "ref": "ece41aa84d7879d7e55c59e955a5884b541f7f3b",
+      "submodules": true,
+      "note": "ref is the fully resolved commit of annotated tag v4.2.0 (tag object 5bb362ae26e1d3f5e1d753a274abe2d23a0aa6c0), verified fetchable with 'git fetch --depth 1'. all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE declares the dual Apache-2.0 OR GPL-2.0-or-later license; script pins tag v4.2.0 and initialises submodules.",
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ]
+    },
+    {
+      "name": "mingw-std-threads",
+      "version": "c931bac",
+      "license": "BSD-2-Clause",
+      "kind": "git",
+      "url": "https://github.com/meganz/mingw-std-threads.git",
+      "ref": "c931bac289dd431f1dd30fc4a5d1a7be36668073",
+      "submodules": false,
+      "platforms": [
+        "win-x64"
+      ],
+      "note": "win-x64 only. win64 toolchain helper; LICENSE = BSD-2-Clause."
+    },
+    {
+      "name": "mingw-w64",
+      "version": "57b5950",
+      "license": "LicenseRef-MinGW-w64-runtime",
+      "kind": "git",
+      "url": "https://git.code.sf.net/p/mingw-w64/mingw-w64.git",
+      "ref": "57b595039040eaa15bece85b7cc71d952281b269",
+      "submodules": false,
+      "platforms": [
+        "win-x64"
+      ],
+      "note": "win-x64 only. win64 build toolchain and runtime; license per COPYING.MinGW-w64-runtime/COPYING.MinGW-w64-runtime.txt (permissive, BSD-style overall notice plus per-file notices; no SPDX id)."
+    },
+    {
+      "name": "nghttp2",
+      "version": "19d06e6",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://github.com/nghttp2/nghttp2.git",
+      "ref": "19d06e62185d93d2398d85241cdbb460349bfe44",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = MIT."
+    },
+    {
+      "name": "nghttp3",
+      "version": "2304973",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://github.com/ngtcp2/nghttp3.git",
+      "ref": "2304973e5a0c8b1fa4bb380b47945a000357f87f",
+      "submodules": true,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = MIT; script initialises the lib/sfparse submodule."
+    },
+    {
+      "name": "ngtcp2",
+      "version": "a4925d7",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://github.com/ngtcp2/ngtcp2.git",
+      "ref": "a4925d70647b75286b28c37be260de3729c2de3d",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = MIT."
+    },
+    {
+      "name": "nv-codec-headers",
+      "version": "eddcea9",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://github.com/FFmpeg/nv-codec-headers.git",
+      "ref": "eddcea9e27f6b772057c9b3f87de2cc1737faffc",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). Headers carry NVIDIA's MIT text (include/ffnvcodec/*.h); repository has no root LICENSE file."
+    },
+    {
+      "name": "ogg",
+      "version": "06a5e02",
+      "license": "BSD-3-Clause",
+      "kind": "git",
+      "url": "https://github.com/xiph/ogg.git",
+      "ref": "06a5e0262cdc28aa4ae6797627a783b5010440f0",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = BSD-3-Clause."
+    },
+    {
+      "name": "openal-soft",
+      "version": "c89b8cf",
+      "license": "LGPL-2.0-or-later",
+      "kind": "git",
+      "url": "https://github.com/kcat/openal-soft.git",
+      "ref": "c89b8cf7bba4822f230c69f0a6696a52e5322dca",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = GNU Library General Public License v2."
+    },
+    {
+      "name": "openapv",
+      "version": "a58ce73",
+      "license": "BSD-3-Clause",
+      "kind": "git",
+      "url": "https://github.com/AcademySoftwareFoundation/openapv.git",
+      "ref": "a58ce739be0dfb083643d929aee8f0e0ba9bdf63",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = BSD-3-Clause."
+    },
+    {
+      "name": "OpenCL-Headers",
+      "version": "e606018",
+      "license": "Apache-2.0",
+      "kind": "git",
+      "url": "https://github.com/KhronosGroup/OpenCL-Headers.git",
+      "ref": "e6060189f4ebe8b52d885c37af71b9a50c272154",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = Apache-2.0."
+    },
+    {
+      "name": "OpenCL-ICD-Loader",
+      "version": "5192c84",
+      "license": "Apache-2.0",
+      "kind": "git",
+      "url": "https://github.com/KhronosGroup/OpenCL-ICD-Loader.git",
+      "ref": "5192c84f8059e5f703e5452929b613f9487f6e4c",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = Apache-2.0."
+    },
+    {
+      "name": "opencore-amr",
+      "version": "7dba8c3",
+      "license": "Apache-2.0",
+      "kind": "git",
+      "url": "https://git.code.sf.net/p/opencore-amr/code",
+      "ref": "7dba8c32238418ce0b316a852b2224df586ca896",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = Apache-2.0."
+    },
+    {
+      "name": "openh264",
+      "version": "8b2d28f",
+      "license": "BSD-2-Clause",
+      "kind": "git",
+      "url": "https://github.com/cisco/openh264.git",
+      "ref": "8b2d28faade10d74d99ac80e199aef664c9c5a3b",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = BSD-2-Clause."
+    },
+    {
+      "name": "openjpeg",
+      "version": "8314119",
+      "license": "BSD-2-Clause",
+      "kind": "git",
+      "url": "https://github.com/uclouvain/openjpeg.git",
+      "ref": "8314119b067c0fc77834731168daaebd379fdb12",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = BSD-2-Clause."
+    },
+    {
+      "name": "openmpt",
+      "version": "f83cedb",
+      "license": "BSD-3-Clause",
+      "kind": "git",
+      "url": "https://github.com/OpenMPT/openmpt.git",
+      "ref": "f83cedb0cd5446e4dfaa83ac97e3087107e26767",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = BSD-3-Clause."
+    },
+    {
+      "name": "openssl",
+      "version": "openssl-3.6.4",
+      "license": "Apache-2.0",
+      "kind": "git",
+      "url": "https://github.com/openssl/openssl.git",
+      "ref": "d3c1b1169b3569ff3069e5b399f47b2b28e03d79",
+      "submodules": true,
+      "note": "ref is the fully resolved commit of annotated tag openssl-3.6.4 (tag object 360ffdb6d82f298d8d22c838dc2b7bf61ece056d), verified fetchable with 'git fetch --depth 1'. all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE.txt = Apache-2.0; script pins tag openssl-3.6.4 and runs 'git submodule update --init --recursive'.",
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ]
+    },
+    {
+      "name": "opus",
+      "version": "503d81b",
+      "license": "BSD-3-Clause",
+      "kind": "git",
+      "url": "https://github.com/xiph/opus.git",
+      "ref": "503d81b138d76621aae4b12786e90de48aa8db3a",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = BSD-3-Clause."
+    },
+    {
+      "name": "pango",
+      "version": "8e74c27",
+      "license": "LGPL-2.0-or-later",
+      "kind": "git",
+      "url": "https://github.com/GNOME/pango.git",
+      "ref": "8e74c27c113c98664b77272d16b14bbce542c184",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = GNU Library General Public License v2."
+    },
+    {
+      "name": "pcre2",
+      "version": "09eb19d",
+      "license": "BSD-3-Clause WITH PCRE2-exception",
+      "kind": "git",
+      "url": "https://github.com/PCRE2Project/pcre2.git",
+      "ref": "09eb19dc1102b34e7557408f33318364cb97d2b0",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENCE.md explicitly declares 'SPDX-License-Identifier: BSD-3-Clause WITH PCRE2-exception'."
+    },
+    {
+      "name": "pixman",
+      "version": "96c04d1",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/pixman/pixman.git",
+      "ref": "96c04d1b87934dc4b9396197a2dff737698ab310",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = MIT."
+    },
+    {
+      "name": "publicsuffix-list",
+      "version": "a179a48",
+      "license": "MPL-2.0",
+      "kind": "git",
+      "url": "https://github.com/publicsuffix/list.git",
+      "ref": "a179a48c465e818cfd8d626691cb317985da87fb",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). Public Suffix List data; LICENSE = MPL-2.0. Used as libpsl builtin data, not linked itself."
+    },
+    {
+      "name": "pulseaudio",
+      "version": "77d25a1",
+      "license": "LGPL-2.1-or-later",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/pulseaudio/pulseaudio.git",
+      "ref": "77d25a1e613095bdf87a1d13b65e7c330565077a",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). LICENSE: source files are LGPL (server side has optional GPL deps); only libpulse/libpulse-simple are linked."
+    },
+    {
+      "name": "rav1e",
+      "version": "31435de",
+      "license": "BSD-2-Clause",
+      "kind": "git",
+      "url": "https://github.com/xiph/rav1e.git",
+      "ref": "31435de9d76fddd38f6dcc31d4014574cebb2092",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = BSD-2-Clause."
+    },
+    {
+      "name": "rubberband",
+      "version": "e4296ac",
+      "license": "GPL-2.0-or-later",
+      "kind": "git",
+      "url": "https://github.com/breakfastquay/rubberband.git",
+      "ref": "e4296ac80b1170018a110bc326fd0d45a0eb27d6",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = GPLv2."
+    },
+    {
+      "name": "SDL2",
+      "version": "b90ac95",
+      "license": "Zlib",
+      "kind": "git",
+      "url": "https://github.com/libsdl-org/SDL.git",
+      "ref": "b90ac95029d801c5abc59472ba8e2200dff31e1e",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE.txt = zlib license; pinned on the SDL2 branch."
+    },
+    {
+      "name": "serd",
+      "version": "b6053bb",
+      "license": "ISC",
+      "kind": "git",
+      "url": "https://github.com/drobilla/serd.git",
+      "ref": "b6053bb2a4533e6a8e3821c1061f140d5e666938",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = ISC."
+    },
+    {
+      "name": "shaderc",
+      "version": "a8abeb0",
+      "license": "Apache-2.0",
+      "kind": "git",
+      "url": "https://github.com/google/shaderc.git",
+      "ref": "a8abeb0b8a9d4b11e3d59ca9f4550b8213e733ab",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = Apache-2.0."
+    },
+    {
+      "name": "snappy",
+      "version": "9c28114",
+      "license": "BSD-3-Clause",
+      "kind": "git",
+      "url": "https://github.com/google/snappy.git",
+      "ref": "9c28114a38866f6deeaa826db918293bc28ae410",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = BSD-3-Clause."
+    },
+    {
+      "name": "sord",
+      "version": "4b5232b",
+      "license": "ISC",
+      "kind": "git",
+      "url": "https://github.com/drobilla/sord.git",
+      "ref": "4b5232bb91e7f2f1b84df384494d073fabbcd312",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = ISC."
+    },
+    {
+      "name": "soxr",
+      "version": "945b592",
+      "license": "LGPL-2.1-or-later",
+      "kind": "git",
+      "url": "https://git.code.sf.net/p/soxr/code",
+      "ref": "945b592b70470e29f917f4de89b4281fbbd540c0",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENCE states the library is free software; COPYING.LGPL = LGPL-2.1."
+    },
+    {
+      "name": "SPIRV-Cross",
+      "version": "aa217ae",
+      "license": "Apache-2.0",
+      "kind": "git",
+      "url": "https://github.com/KhronosGroup/SPIRV-Cross.git",
+      "ref": "aa217aeb6c9f0ace7a0ab233b28807edf45eb165",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = Apache-2.0."
+    },
+    {
+      "name": "SPIRV-Headers",
+      "version": "2b7475f",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://github.com/KhronosGroup/SPIRV-Headers.git",
+      "ref": "2b7475f6d664efbad4d4315c94ecec9640831e5b",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = Khronos MIT-style text."
+    },
+    {
+      "name": "sratom",
+      "version": "9e8ee84",
+      "license": "ISC",
+      "kind": "git",
+      "url": "https://github.com/lv2/sratom.git",
+      "ref": "9e8ee84eed502e6030ce8bb49694fd28542b08fc",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = ISC."
+    },
+    {
+      "name": "srt",
+      "version": "ff8ab25",
+      "license": "MPL-2.0",
+      "kind": "git",
+      "url": "https://github.com/Haivision/srt.git",
+      "ref": "ff8ab25c57aece5b7351defe36dacc94fc28527f",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = MPL-2.0."
+    },
+    {
+      "name": "SVT-AV1",
+      "version": "5ed9ffb",
+      "license": "BSD-3-Clause-Clear",
+      "kind": "git",
+      "url": "https://gitlab.com/AOMediaCodec/SVT-AV1.git",
+      "ref": "5ed9ffbcb5086da23f30fe9bc5b00145358462da",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE.md = 'BSD 3-Clause Clear License' (BSD-3-Clause-Clear); LICENSE-BSD2.md covers a subset of files."
+    },
+    {
+      "name": "twolame",
+      "version": "6fced85",
+      "license": "LGPL-2.1-or-later",
+      "kind": "git",
+      "url": "https://github.com/njh/twolame.git",
+      "ref": "6fced852d4d5cfad58cf9dbe3ea619b08e87d398",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = LGPL-2.1."
+    },
+    {
+      "name": "uavs3d",
+      "version": "0e20d2c",
+      "license": "BSD-3-Clause",
+      "kind": "git",
+      "url": "https://github.com/uavs3/uavs3d.git",
+      "ref": "0e20d2c291853f196c68922a264bcd8471d75b68",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = 3-clause BSD style license."
+    },
+    {
+      "name": "vid.stab",
+      "version": "e2445c4",
+      "license": "LGPL-2.1-or-later",
+      "kind": "git",
+      "url": "https://github.com/georgmartius/vid.stab.git",
+      "ref": "e2445c4081658318223762a696eb1c645c2d7168",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE states LGPL-2.1 or later; full text in COPYING.LESSER."
+    },
+    {
+      "name": "vmaf",
+      "version": "86da14d",
+      "license": "BSD-2-Clause-Patent",
+      "kind": "git",
+      "url": "https://github.com/Netflix/vmaf.git",
+      "ref": "86da14d0306a138fd3f01319860b905169746516",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE declares SPDX short identifier BSD-2-Clause-Patent."
+    },
+    {
+      "name": "vorbis",
+      "version": "1b75110",
+      "license": "BSD-3-Clause",
+      "kind": "git",
+      "url": "https://github.com/xiph/vorbis.git",
+      "ref": "1b75110b5a2754ba1931d82dd83cb822b266a21d",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = BSD-3-Clause."
+    },
+    {
+      "name": "Vulkan-Headers",
+      "version": "v1.4.363",
+      "license": "Apache-2.0 OR MIT",
+      "kind": "git",
+      "url": "https://github.com/KhronosGroup/Vulkan-Headers.git",
+      "ref": "6802bb4733b63ed5efd3adb308a6c885ef180ea1",
+      "submodules": false,
+      "note": "ref is the fully resolved commit of annotated tag v1.4.363 (tag object 7feeb71f59b8c1531ef5f7bb4b36e1aac46a0acb), verified fetchable with 'git fetch --depth 1'. all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE.md: files fall under Apache-2.0 or MIT (Vulkan-Headers).",
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ]
+    },
+    {
+      "name": "Vulkan-Shim-Loader",
+      "version": "65b3936",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://github.com/BtbN/Vulkan-Shim-Loader.git",
+      "ref": "65b3936528cd92eb4ea3de485d03f858a3850484",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = MIT."
+    },
+    {
+      "name": "vvenc",
+      "version": "b1cfb2a",
+      "license": "BSD-3-Clause-Clear",
+      "kind": "git",
+      "url": "https://github.com/fraunhoferhhi/vvenc.git",
+      "ref": "b1cfb2ad495af6ae4cc214b7a060e8b4166c4629",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE.txt = BSD 3-Clause Clear License."
+    },
+    {
+      "name": "x264",
+      "version": "0480cb0",
+      "license": "GPL-2.0-or-later",
+      "kind": "git",
+      "url": "https://code.videolan.org/videolan/x264.git",
+      "ref": "0480cb05fa188d37ae87e8f4fd8f1aea3711f7ee",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = GPLv2; common/base.h grants 'either version 2 of the License, or (at your option) any later version'."
+    },
+    {
+      "name": "x265",
+      "version": "020d705",
+      "license": "GPL-2.0-or-later",
+      "kind": "git",
+      "url": "https://github.com/Multicorewareinc/x265.git",
+      "ref": "020d7054dbecfd3be8e62efe33ff8a305d41856e",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = GPLv2; sources grant 'or (at your option) any later version'."
+    },
+    {
+      "name": "xavs2",
+      "version": "eae1e8b",
+      "license": "GPL-2.0-or-later",
+      "kind": "git",
+      "url": "https://github.com/pkuvcl/xavs2.git",
+      "ref": "eae1e8b9d12468059bdd7dee893508e470fa83d8",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "win-x64"
+      ],
+      "note": "linux-x64 and win-x64 only (not linux-arm64). COPYING = GPLv2."
+    },
+    {
+      "name": "xcbproto",
+      "version": "cf7e258",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/xorg/proto/xcbproto.git",
+      "ref": "cf7e2581b613802f2f8ec2a4b50a6a20aad4bf52",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). COPYING = MIT/X11-style permissive text (X.Org)."
+    },
+    {
+      "name": "xorg-macros",
+      "version": "ea1e15a",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/xorg/util/macros.git",
+      "ref": "ea1e15a4909ac8b03b2c5a08ac3810b385985157",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). Build macros (xorg-macros.m4); COPYING = MIT/X11-style permissive text."
+    },
+    {
+      "name": "xorgproto",
+      "version": "fd86fbf",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://gitlab.freedesktop.org/xorg/proto/xorgproto.git",
+      "ref": "fd86fbff46eb7ab8e193c12b8a529e90bae31835",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64"
+      ],
+      "note": "linux only (linux-x64, linux-arm64). COPYING = MIT/X11-style permissive text (X.Org)."
+    },
+    {
+      "name": "xvidcore",
+      "version": "r2204",
+      "license": "GPL-2.0-or-later",
+      "kind": "svn",
+      "url": "https://svn.xvid.org/trunk/xvidcore",
+      "ref": "2204",
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). src/xvid.h states GPLv2 or later; LICENSE = GPLv2."
+    },
+    {
+      "name": "xz",
+      "version": "3b1efb0",
+      "license": "0BSD",
+      "kind": "git",
+      "url": "https://github.com/tukaani-project/xz.git",
+      "ref": "3b1efb04d17c3a9ef7f473d73af13f1531428ffe",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). Only liblzma is linked; COPYING states liblzma is under the BSD Zero Clause License (0BSD)."
+    },
+    {
+      "name": "zimg",
+      "version": "67e0603",
+      "license": "WTFPL",
+      "kind": "git",
+      "url": "https://github.com/sekrit-twc/zimg.git",
+      "ref": "67e0603271c080e22c8429856dd4a8a56587e61e",
+      "submodules": true,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = WTFPL; script initialises recursive submodules."
+    },
+    {
+      "name": "zix",
+      "version": "17d6323",
+      "license": "ISC",
+      "kind": "git",
+      "url": "https://github.com/drobilla/zix.git",
+      "ref": "17d632393f5addb6fa24dda2927b96515407cca7",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = ISC."
+    },
+    {
+      "name": "zlib",
+      "version": "767c4c9",
+      "license": "Zlib",
+      "kind": "git",
+      "url": "https://github.com/madler/zlib.git",
+      "ref": "767c4c947852e143f582c85f14cf573411df1b35",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). LICENSE = zlib license."
+    },
+    {
+      "name": "zvbi",
+      "version": "d3a5ee9",
+      "license": "GPL-2.0-or-later",
+      "kind": "git",
+      "url": "https://github.com/zapping-vbi/zvbi",
+      "ref": "d3a5ee9f2b047bf16cd1ee5ccf6ec05ee75409d0",
+      "submodules": false,
+      "platforms": [
+        "linux-x64",
+        "linux-arm64",
+        "win-x64"
+      ],
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING.md states per-file 'License: GPL-2+' for libzvbi."
+    }
+  ],
+  "unresolved": [
+    "https://git.savannah.gnu.org/git/gnulib.git eb72eb6f75f5621c5d648acd11467fd124584617: git smart-HTTP endpoint git.savannah.gnu.org:443 was unreachable from the research host, but the same commit is present and fetchable in the build script's own mirror list (SCRIPT_MIRROR2=https://github.com/coreutils/gnulib.git, verified via GitHub API).",
+    "https://git.savannah.gnu.org/git/libiconv.git 1df3087ba8110c7f3ed3eb5f8869b814dbbe00b0: git smart-HTTP endpoint git.savannah.gnu.org:443 was unreachable from the research host, so 'git fetch --depth 1 <url> <sha>' could not be exercised here; commit existence was confirmed earlier by fetching a file from the project's cgit at that exact revision (cgit plain/?h=<sha> resolved and returned the file), and the ref is the value BtbN's scripts.d pins."
+  ]
+}

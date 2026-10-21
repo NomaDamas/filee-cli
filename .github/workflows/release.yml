@@ -2,8 +2,8 @@ name: Release
 
 # Publishes a GitHub release from a tag v<UPSTREAM version>-<revision>, e.g. v1.12.0-1 for UPSTREAM tag=v1.12.0,
 # revision=1. Run it on the tag: `gh workflow run release.yml --ref v1.12.0-1`. The tag must match the UPSTREAM file
-# (`filee-build release` checks it) and point at a commit on main. All five packages are built and smoke-tested first;
-# the release job only runs when all five pass.
+# (`filee-build release` checks it) and point at a commit on main. All five packages are built and smoke-tested first,
+# and the Corresponding Source of the bundled engines is fetched; the release job only runs when all of it succeeds.
 #
 # Manual, not on tag push, because `filee-build local --publish` pushes the tag and creates the release from this
 # computer while the repository is private. Use this workflow once GitHub Actions can run for the repository.
@@ -47,7 +47,7 @@ jobs:
 
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          pattern: package-*
+          pattern: '*'
           path: assets
           merge-multiple: true
 
@@ -75,9 +75,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          shopt -s nullglob
           gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "filee-cli ${TAG#v}" \
             --notes-file assets/RELEASE_NOTES.md --draft \
-            assets/filee-cli-*.tar.gz assets/filee-cli-*.zip assets/SHA256SUMS
+            assets/filee-cli-*.tar.gz assets/filee-cli-*.zip assets/filee-cli-*.part* assets/SHA256SUMS
           gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

@@ -23,6 +23,15 @@ Nothing from upstream lives in this repository: `UPSTREAM` pins a tag and the ex
    * *a NuGet package without a commit in its nuspec*: add `ref_override` / `license_override` in
      `data/nuget-sources.json` with how you found it.
    * *a new optional engine in `engines.json`*: describe it in `data/optional-engines.json` (license, download URL).
+   * *an engine version or hash changed in `engines.json`* (pandoc, FFmpeg, calibre, Ghostscript, LibreOffice,
+     H2Orestart, JRE, VC++ runtime): the package build stops with "re-pin the sources". Redo the pin file
+     `data/engine-sources/<engine>.json` for the new binary: its `binaries` (URL, SHA-256, size), and the sources it was
+     built from (tag resolved to a full commit; every tarball with SHA-256 and size; svn revisions). Never copy a
+     hash you did not compute by downloading the file. Run `filee-build verify-sources` (offline checks) and
+     `filee-build sources --engines <engine>` (downloads and bundles; it re-verifies every hash and commit).
+     Where upstream pins a binary whose build is not reproducible from published scripts (the Windows FFmpeg),
+     `binaryOverrides` in `cmd/filee-build/engines.go` names the replacement and why.
+   * *an engine added or dropped for a platform*: `engineSets` in `cmd/filee-build/engines.go`, then a pin file as above.
 5. **Build locally** (any one platform is enough to catch most problems):
    ```sh
    go build -o filee-build ./cmd/filee-build

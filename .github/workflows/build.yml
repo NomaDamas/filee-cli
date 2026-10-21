@@ -15,6 +15,38 @@ env:
   DOTNET_NOLOGO: '1'
 
 jobs:
+  # Corresponding Source of the bundled GPL/LGPL/AGPL engines, from the pins in data/engine-sources/. Every hash and
+  # commit is re-verified while the sources are fetched, so this job also proves the pins still resolve.
+  sources:
+    name: engine sources
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - run: go build -trimpath -o filee-build ./cmd/filee-build
+
+      - name: Check the pin files
+        run: ./filee-build verify-sources
+
+      - name: Fetch and bundle the sources
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends subversion git ca-certificates
+          ./filee-build sources --dist dist/sources
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sources
+          path: dist/sources/filee-cli-*-source-*
+          if-no-files-found: error
+
   # Linux packages are built on Ubuntu 22.04 (glibc 2.35) so they run on that and newer systems.
   # GitHub's arm64 Linux runners are free for public repositories only; a private repository cross-builds
   # linux-arm64 on x64 and runs the smoke test in an arm64 container under QEMU.
@@ -85,7 +117,8 @@ jobs:
           docker run --rm --platform "linux/$arch" -v "$PWD/dist:/dist:ro" -v "$RUNNER_TEMP/filee-build-smoke:/filee-build:ro" ubuntu:22.04 bash -euxo pipefail -c '
             apt-get update
             DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-              ca-certificates libc6 libgcc-s1 libicu70 libssl3 libstdc++6 tzdata zlib1g fonts-noto-cjk
+              ca-certificates libc6 libgcc-s1 libicu70 libssl3 libstdc++6 tzdata zlib1g fonts-noto-cjk \
+              libxcb1 libxkbcommon0 libfontconfig1 libfreetype6 libx11-6 libegl1 libopengl0 libglx0
             /filee-build smoke /dist/filee-cli-*-${{ matrix.rid }}.tar.gz
           '
 

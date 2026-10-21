@@ -3,11 +3,14 @@ package main
 import (
 	"archive/zip"
 	"bytes"
+	"context"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"image"
 	"image/color"
 	"image/png"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -173,6 +176,9 @@ func cmdSmoke(args []string) error {
 	if _, err := s.run(2, "convert", filepath.Join(work, "nothing-to-do"), "--to", "pdf"); err != nil {
 		return err
 	}
+	if err := smokeEngines(s, pkg, kind == "zip"); err != nil {
+		return err
+	}
 	fmt.Println("smoke test passed:", base)
 	return nil
 }
@@ -257,4 +263,121 @@ func zipMember(data []byte, name string) ([]byte, error) {
 		}
 	}
 	return nil, fmt.Errorf("no %s in the archive", name)
+}
+
+// engineVersionFlags: how each bundled program reports its version (proves the vendor binary starts on this platform).
+var engineVersionFlags = map[string][]string{
+	"pandoc": {"--version"}, "ffmpeg": {"-version"}, "calibre": {"--version"}, "ghostscript": {"--version"},
+	// soffice's own --version hangs on Windows (the launcher waits for a first-start dialog); Filee only runs it headless,
+	// and the ODT -> DOC conversion below starts it that way.
+	"libreoffice": nil,
+}
+
+// smokeEngines starts every bundled engine program, then runs one conversion that only that engine can do (Filee uses
+// its own copy before anything on the PATH, so a bundled engine that is broken or missing shows up as a failure here).
+func smokeEngines(s *smoke, pkg string, windows bool) error {
+	have := map[string]string{}
+	for _, id := range sortedKeys(engineVersionFlags) {
+		root := filepath.Join(pkg, "engines", id)
+		if _, err := os.Stat(root); err != nil {
+			continue
+		}
+		folder := programFolder(id, root, windows)
+		if folder == "" {
+			return fmt.Errorf("engines/%s is in the package but its programs are not where Filee looks", id)
+		}
+		if engineVersionFlags[id] == nil {
+			have[id] = "present"
+			continue
+		}
+		program := filepath.Join(folder, requiredPrograms(id, windows)[0])
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		out, err := exec.CommandContext(ctx, program, engineVersionFlags[id]...).CombinedOutput()
+		cancel()
+		if err != nil {
+			return fmt.Errorf("engines/%s: %s %s: %v\n%s", id, filepath.Base(program), strings.Join(engineVersionFlags[id], " "), err, out)
+		}
+		have[id] = strings.TrimSpace(strings.SplitN(string(out), "\n", 2)[0])
+		fmt.Printf("engine %s starts: %s\n", id, have[id])
+	}
+	failed := func(source, target, why string) error { return fmt.Errorf("%s -> %s: %s", source, target, why) }
+	if have["pandoc"] != "" {
+		// Only Pandoc writes PowerPoint from Markdown.
+		data, err := s.convert("doc.md", "pptx", "doc.pptx")
+		if err != nil {
+			return err
+		}
+		if _, err := zipMember(data, "ppt/presentation.xml"); err != nil {
+			return failed("doc.md", "pptx", err.Error())
+		}
+		fmt.Println("MD -> PPTX (Pandoc) ok")
+	}
+	if have["calibre"] != "" {
+		if _, err := s.convert("doc.md", "epub", "doc.epub"); err != nil {
+			return err
+		}
+		mobi, err := s.convert("doc.epub", "mobi", "doc.mobi")
+		if err != nil {
+			return err
+		}
+		if len(mobi) < 68 || string(mobi[60:68]) != "BOOKMOBI" {
+			return failed("doc.epub", "mobi", "not a MOBI file")
+		}
+		fmt.Println("EPUB -> MOBI (calibre) ok")
+	}
+	if have["libreoffice"] != "" {
+		if _, err := s.convert("doc.md", "odt", "doc.odt"); err != nil {
+			return err
+		}
+		doc, err := s.convert("doc.odt", "doc", "doc.doc")
+		if err != nil {
+			return err
+		}
+		if !bytes.HasPrefix(doc, []byte{0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1}) {
+			return failed("doc.odt", "doc", "not an OLE2 Word file")
+		}
+		fmt.Println("ODT -> DOC (LibreOffice) ok")
+	}
+	if have["ffmpeg"] != "" {
+		var pcm bytes.Buffer
+		for i := 0; i < 8000; i++ {
+			binary.Write(&pcm, binary.LittleEndian, int16(8000*math.Sin(float64(i)/10)))
+		}
+		var wav bytes.Buffer
+		wav.WriteString("RIFF")
+		binary.Write(&wav, binary.LittleEndian, uint32(36+pcm.Len()))
+		wav.WriteString("WAVEfmt ")
+		for _, v := range []any{uint32(16), uint16(1), uint16(1), uint32(8000), uint32(16000), uint16(2), uint16(16)} {
+			binary.Write(&wav, binary.LittleEndian, v)
+		}
+		wav.WriteString("data")
+		binary.Write(&wav, binary.LittleEndian, uint32(pcm.Len()))
+		wav.Write(pcm.Bytes())
+		if err := os.WriteFile(filepath.Join(s.work, "tone.wav"), wav.Bytes(), 0o644); err != nil {
+			return err
+		}
+		mp3, err := s.convert("tone.wav", "mp3", "tone.mp3")
+		if err != nil {
+			return err
+		}
+		if !(bytes.HasPrefix(mp3, []byte("ID3")) || (len(mp3) > 2 && mp3[0] == 0xff && mp3[1]&0xe0 == 0xe0)) {
+			return failed("tone.wav", "mp3", "not an MP3 file")
+		}
+		fmt.Println("WAV -> MP3 (FFmpeg) ok")
+	}
+	if have["ghostscript"] != "" {
+		ps := "%!PS\n/Helvetica findfont 24 scalefont setfont 72 700 moveto (Filee) show showpage\n"
+		if err := os.WriteFile(filepath.Join(s.work, "page.ps"), []byte(ps), 0o644); err != nil {
+			return err
+		}
+		pdf, err := s.convert("page.ps", "pdf", "page.pdf")
+		if err != nil {
+			return err
+		}
+		if !bytes.HasPrefix(pdf, []byte("%PDF-")) {
+			return failed("page.ps", "pdf", "not a PDF")
+		}
+		fmt.Println("PS -> PDF (Ghostscript) ok")
+	}
+	return nil
 }

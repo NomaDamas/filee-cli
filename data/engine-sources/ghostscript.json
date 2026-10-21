@@ -1,0 +1,38 @@
+{
+  "engine": "ghostscript",
+  "name": "Ghostscript",
+  "license": "AGPL-3.0-or-later",
+  "binaries": {
+    "win-x64": {
+      "version": "10.08.0",
+      "url": "https://conda.anaconda.org/conda-forge/win-64/ghostscript-10.08.0-hac47afa_0.conda",
+      "sha256": "512BE9413C58B0AD3A2CD95A63EAEA73CBE32D9A6B9170C848BF825694A4ADB0",
+      "size": 19295904,
+      "note": "Only Windows is bundled by Filee: the `ghostscript` component exists solely in the top-level `components` map of engines.json (and the Filee installer unpacks it only for win-x64); there is no ghostscript entry under any `platforms.<rid>.components`, so macOS/Linux do not ship this engine."
+    }
+  },
+  "host_source": true,
+  "build_recipe": "Windows package: conda-forge/ghostscript-feedstock at commit ed30a22a55a805dd8ba98d14173e9dba04a802f7 (2026-09-08, \"Bump version from 10.07.1 to 10.08.0 (#41)\"; https://github.com/conda-forge/ghostscript-feedstock/tree/ed30a22a55a805dd8ba98d14173e9dba04a802f7). That commit is recorded verbatim in the shipped package's info/about.json / info/recipe/meta.yaml `extra.sha` field; it was verified with the GitHub API. Build string hac47afa_0, build number 0, subdir win-64 (info/index.json). The Windows build is recipe/bld.bat: `nmake -f psi\\msvc.mak WIN64= MSVC_VERSION=%VS_MAJOR% DEVSTUDIO=` against the upstream ghostscript-10.08.0 source, then Library/bin/gs.exe is created by copying bin\\gswin64c.exe and the bin DLLs/EXEs/LIBs/EXPs and the Resource tree are copied into the prefix. Toolchain: c/cxx compiler vs2022, c_stdlib vs (recipe/conda_build_config.yaml, info/hash_input.json); host requirements are only ucrt 10.0.26100.0, vc 14.5, vc14_runtime 14.51.36247 and vcomp14 14.51.36247 (recipe/meta.yaml), run requirements ucrt>=10.0.20348.0, vc>=14.3,<15, vc14_runtime>=14.44.35208. No external freetype/lcms2/jpeg/tiff/openjpeg/png/zlib/expat/fontconfig/libidn/jbig2dec/ijs conda packages are used: the recipe's build+host requirements contain no such dependency, and the Windows build compiles the copies vendored in the upstream tarball (psi/msvc.mak defaults: FTSRCDIR=freetype, JSRCDIR=jpeg, PNGSRCDIR=libpng, TIFFSRCDIR=tiff, ZSRCDIR=./zlib, BROTLISRCDIR=./brotli, JBIG2SRCDIR=jbig2dec, JPX_LIB=openjpeg, LCMS2MTSRCDIR=lcms2mt, IJSSRCDIR=ijs, plus the CUPS device sources in cups/); Tesseract/Leptonica are disabled. Consequently the shipped ghostscript-10.08.0 win-x64 folder contains no separate third-party DLLs: the only files under Library/bin are gsdll64.dll, gs.exe, gswin64c.exe and gswin64.exe (plus Library/lib/*.lib|*.exp), and the Filee installer (EngineInstaller.UnpackConda) copies exactly Library/bin/* into the engine folder. All third-party code is statically linked into gsdll64.dll, so its Corresponding Source is the same upstream tarball pinned below. Filee additionally copies the DLLs of the separate `vcruntime` engine component (conda-forge vc14_runtime 14.44.35208 h818238b_41, https://conda.anaconda.org/conda-forge/win-64/vc14_runtime-14.44.35208-h818238b_41.conda) next to these executables; that is Microsoft's redistributable runtime, covered by its own engine source pin, not by this one.",
+  "sources": [
+    {
+      "name": "ghostscript",
+      "version": "10.08.0",
+      "license": "AGPL-3.0-or-later",
+      "kind": "http",
+      "url": "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10080/ghostscript-10.08.0.tar.gz",
+      "sha256": "caf199e3f233f1290b27d0972d636f66c303355f2353309b7bfddf1edda06b3d",
+      "size": 90851112,
+      "note": "Upstream source tarball named by recipe/meta.yaml (source.url/source.sha256); sha256 and size re-verified here by downloading the release asset (sha256 matches the recipe exactly, 90,851,112 bytes). It contains the ghostscript base/psi/lib/devices sources plus the vendored third-party trees that the Windows build statically links (freetype, jpeg, libpng, tiff, zlib, brotli, jbig2dec, openjpeg, lcms2mt, ijs, cups, and the unused leptonica/tesseract), so their source is part of this same archive. License from the archive's LICENSE file: \"GPL Ghostscript is free software; you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\" (recipe/meta.yaml and the package's info/about.json record the same license more coarsely as `AGPL-3.0-only` with license_file LICENSE.)"
+    },
+    {
+      "name": "conda-forge/ghostscript-feedstock",
+      "version": "ed30a22a55a805dd8ba98d14173e9dba04a802f7",
+      "license": "BSD-3-Clause",
+      "kind": "git",
+      "url": "https://github.com/conda-forge/ghostscript-feedstock",
+      "ref": "ed30a22a55a805dd8ba98d14173e9dba04a802f7",
+      "submodules": false,
+      "note": "Recipe that produced the shipped .conda file; commit identity taken from info/about.json extra.sha and info/recipe/meta.yaml extra.sha, verified via the GitHub API (committer date 2026-09-08T14:31:01Z, commit 'Bump version from 10.07.1 to 10.08.0 (#41)'). Relevant files at this commit: recipe/meta.yaml, recipe/meta.yaml.template, recipe/bld.bat, recipe/build.sh, recipe/conda_build_config.yaml (all four recipe files are also embedded verbatim in the shipped package under info/recipe/). There is no patches/ directory and meta.yaml declares no patches, so no patch files are applied. The feedstock's own license file is LICENSE.txt (BSD-3-Clause)."
+    }
+  ]
+}

@@ -288,6 +288,11 @@ func addEngines(rid, pkg, rhwpDir, scratch string) (EnginesInfo, error) {
 	}
 	info.SevenZip.URL, info.SevenZip.Sha256 = z.URL, z.Sha256
 
+	info.Bundled, err = installEngines(rid, engines, scratch)
+	if err != nil {
+		return info, err
+	}
+
 	if !windows {
 		for _, p := range []string{program, filepath.Join(zipTarget, "7zz"), filepath.Join(pkg, "filee-cli")} {
 			if err := os.Chmod(p, 0o755); err != nil {
@@ -315,6 +320,12 @@ func isMachO(p string) bool {
 	return false
 }
 
+// vendorSigned: the application bundles of calibre and LibreOffice keep the vendor's own signature, which signing a
+// single file inside would break.
+func vendorSigned(rel string) bool {
+	return strings.HasPrefix(rel, "engines/calibre/") || strings.HasPrefix(rel, "engines/libreoffice/")
+}
+
 // codesignMacOS signs every Mach-O file (the main program last) and verifies the program.
 func codesignMacOS(pkg, identity string) error {
 	options := []string{"--force", "--sign", identity}
@@ -330,7 +341,7 @@ func codesignMacOS(pkg, identity string) error {
 	main := filepath.Join(pkg, "filee-cli")
 	for _, rel := range files {
 		p := filepath.Join(pkg, filepath.FromSlash(rel))
-		if p == main || !isMachO(p) {
+		if p == main || !isMachO(p) || vendorSigned(rel) {
 			continue
 		}
 		if _, err := run(runOpts{Quiet: true}, "codesign", append(append([]string{}, options...), "--entitlements", entitlements, p)...); err != nil {
@@ -356,12 +367,12 @@ func checkNoGUI(pkg string) ([]string, error) {
 		if strings.HasPrefix(lower, "licenses/") || lower == "third-party-notices.md" || lower == "upstream.md" || lower == "readme.md" {
 			continue // texts that talk about those components
 		}
+		if strings.HasPrefix(lower, "engines/") {
+			continue // third-party programs with their own files (LibreOffice has a fileexporteddialog.ui)
+		}
 		base := path.Base(lower)
 		if strings.HasPrefix(base, "filee") && !allowedFilee[base] {
 			offenders = append(offenders, rel)
-			continue
-		}
-		if strings.HasPrefix(lower, "engines/") {
 			continue
 		}
 		for _, w := range forbidden {
@@ -431,6 +442,9 @@ const packageReadme = "# filee-cli %s (%s)\n\n" +
 
 const linuxNote = "\nLinux needs the system libraries .NET itself needs, e.g. on Ubuntu 22.04:\n" +
 	"`sudo apt-get install -y ca-certificates libc6 libgcc-s1 libicu70 libssl3 libstdc++6 tzdata zlib1g`\n\n" +
+	"The bundled calibre (`engines/calibre`, e-book conversion) is a Qt program and needs these libraries even though it runs\n" +
+	"without a display: `sudo apt-get install -y libxcb1 libxkbcommon0 libfontconfig1 libfreetype6 libx11-6 libegl1\n" +
+	"libopengl0 libglx0`. Without them only the calibre conversions fail (the error names the missing library).\n\n" +
 	"HWP/HWPX to PDF (rhwp) draws text with fonts installed on the computer; it embeds none. Install a Korean font\n" +
 	"(for example `fonts-noto-cjk`) or Hangul will not render. The release tests ran with `fonts-noto-cjk`.\n"
 
@@ -445,9 +459,10 @@ func writeArchive(pkg, dest, rid string, epoch int64) error {
 	defer out.Close()
 
 	type entry struct {
-		rel   string
-		isDir bool
-		exec  bool
+		rel    string
+		isDir  bool
+		exec   bool
+		linkTo string // symlink target (engine bundles such as LibreOffice.app contain symlinks)
 	}
 	var entries []entry
 	err = filepath.WalkDir(pkg, func(p string, d fs.DirEntry, err error) error {
@@ -459,10 +474,21 @@ func writeArchive(pkg, dest, rid string, epoch int64) error {
 		if err != nil {
 			return err
 		}
+		if info.Mode()&fs.ModeSymlink != 0 {
+			if strings.HasPrefix(rid, "win-") {
+				return fmt.Errorf("%s is a symlink, which a zip package cannot carry portably", p)
+			}
+			to, err := os.Readlink(p)
+			if err != nil {
+				return err
+			}
+			entries = append(entries, entry{rel: filepath.ToSlash(rel), linkTo: to})
+			return nil
+		}
 		if !d.IsDir() && !info.Mode().IsRegular() {
 			return fmt.Errorf("%s is not a regular file", p)
 		}
-		entries = append(entries, entry{filepath.ToSlash(rel), d.IsDir(), info.Mode()&0o111 != 0})
+		entries = append(entries, entry{rel: filepath.ToSlash(rel), isDir: d.IsDir(), exec: info.Mode()&0o111 != 0})
 		return nil
 	})
 	if err != nil {
@@ -506,6 +532,13 @@ func writeArchive(pkg, dest, rid string, epoch int64) error {
 	}
 	for _, e := range entries {
 		h := &tar.Header{Name: top + "/" + e.rel, ModTime: mtime, Format: tar.FormatPAX}
+		if e.linkTo != "" {
+			h.Typeflag, h.Mode, h.Linkname = tar.TypeSymlink, 0o777, e.linkTo
+			if err := tw.WriteHeader(h); err != nil {
+				return err
+			}
+			continue
+		}
 		if e.isDir {
 			h.Typeflag, h.Mode, h.Name = tar.TypeDir, 0o755, h.Name+"/"
 			if err := tw.WriteHeader(h); err != nil {

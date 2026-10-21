@@ -79,9 +79,14 @@ func cmdGlibc(args []string) error {
 		}
 		defer f.Close()
 		var newest version
-		needs, err := f.DynamicVersionNeeds()
-		if err != nil && !strings.Contains(err.Error(), "no") {
-			return fmt.Errorf("%s: %w", name, err)
+		// A file with no versioned imports (a Python extension that only calls into its host, a static library) has no
+		// .gnu.version_r section, hence no glibc requirement.
+		var needs []elf.DynamicVersionNeed
+		if f.SectionByType(elf.SHT_GNU_VERNEED) != nil {
+			needs, err = f.DynamicVersionNeeds()
+			if err != nil {
+				return fmt.Errorf("%s: %w", name, err)
+			}
 		}
 		for _, n := range needs {
 			for _, d := range n.Needs {

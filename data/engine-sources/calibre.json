@@ -1,0 +1,1048 @@
+{
+  "engine": "calibre",
+  "name": "calibre",
+  "license": "GPL-3.0-only",
+  "binaries": {
+    "win": {
+      "version": "9.15.0",
+      "url": "https://download.calibre-ebook.com/9.15.0/calibre-64bit-9.15.0.msi",
+      "sha256": "0F96AE06165C2419607C1C66726C091A78E89E08EA69F077CF3E2C884E800853",
+      "size": 226549760
+    },
+    "linux-x64": {
+      "version": "9.15.0",
+      "url": "https://download.calibre-ebook.com/9.15.0/calibre-9.15.0-x86_64.txz",
+      "sha256": "3F5301C0AA51E5FB2D5F6DCD04024BA4E86501AB328CE5D9D6760EFCCB887990",
+      "size": 194998300
+    },
+    "linux-arm64": {
+      "version": "9.15.0",
+      "url": "https://download.calibre-ebook.com/9.15.0/calibre-9.15.0-arm64.txz",
+      "sha256": "15AB887F9D787809BC834CA0EA6408E981B409F0B23046C41C18DE948EB50A38",
+      "size": 182488416
+    },
+    "osx-x64": {
+      "version": "9.15.0",
+      "url": "https://download.calibre-ebook.com/9.15.0/calibre-9.15.0.dmg",
+      "sha256": "1B3A7451175B73AE2BAA28FE1BC1C53EE34D65B489881E7EC02C20F9E0FF6019",
+      "size": 350293492
+    },
+    "osx-arm64": {
+      "version": "9.15.0",
+      "url": "https://download.calibre-ebook.com/9.15.0/calibre-9.15.0.dmg",
+      "sha256": "1B3A7451175B73AE2BAA28FE1BC1C53EE34D65B489881E7EC02C20F9E0FF6019",
+      "size": 350293492
+    }
+  },
+  "host_source": true,
+  "build_recipe": "Dependency build scripts: https://github.com/kovidgoyal/calibre/tree/6a97bf55cbbab094d5f0e28ff812c6d4b158535d/bypy (bypy/{linux,macos,windows}/__main__.py + conf files; bypy/sources.json is the dependency manifest converted below), driven by the kovidgoyal/bypy repo (https://github.com/kovidgoyal/bypy @ 2a2d73ab6b41c8ba121493bcb72e0aad68887d7c, bypy/download_sources.py ensure_downloaded()/Dependency.from_sources_json_entry()). The release binaries are produced by ./setup.py build_dep <plat> then ./setup.py linux|osx|win in the calibre tree at https://github.com/kovidgoyal/calibre @ 6a97bf55cbbab094d5f0e28ff812c6d4b158535d. sources[] below is the bypy/sources.json manifest at that commit converted to individually pinned downloads (qt-* entries get their URL from bypy/download_sources.py populate_qt_dep(): https://download.qt.io/official_releases/qt/6.10/6.10.1/submodules/<module>-everywhere-src-6.10.1.tar.xz). All sha256/size values were recomputed by downloading each file; where sources.json published a matching sha256 it matched, and the two sha1-only entries (hyphen, chmlib) were verified against their published sha1.",
+  "sources": [
+    {
+      "name": "nasm (unix sources)",
+      "version": "2.16.01",
+      "license": "BSD-2-Clause",
+      "kind": "http",
+      "url": "https://www.nasm.us/pub/nasm/releasebuilds/2.16.01/nasm-2.16.01.tar.xz",
+      "sha256": "c77745f4802375efeee2ec5c0ad6b7f037ea9c87c92b149a9637ff099f162558",
+      "size": 1017732,
+      "platforms": [
+        "osx",
+        "win"
+      ],
+      "note": "Build-time dependency (not a runtime library)."
+    },
+    {
+      "name": "nasm (windows sources)",
+      "version": "2.16.01",
+      "license": "BSD-2-Clause",
+      "kind": "http",
+      "url": "https://www.nasm.us/pub/nasm/releasebuilds/2.16.01/win64/nasm-2.16.01-win64.zip",
+      "sha256": "029eed31faf0d2c5f95783294432cbea6c15bf633430f254bb3c1f195c67ca3a",
+      "size": 506056,
+      "platforms": [
+        "osx",
+        "win"
+      ],
+      "note": "Build-time dependency (not a runtime library)."
+    },
+    {
+      "name": "cmake",
+      "version": "4.2.0",
+      "license": "BSD-3-Clause",
+      "kind": "http",
+      "url": "https://github.com/Kitware/CMake/releases/download/v4.2.0/cmake-4.2.0.tar.gz",
+      "sha256": "4104e94657d247c811cb29985405a360b78130b5d51e7f6daceb2447830bd579",
+      "size": 12339099,
+      "platforms": [
+        "osx"
+      ],
+      "note": "Build-time dependency (not a runtime library)."
+    },
+    {
+      "name": "autoconf",
+      "version": "2.71",
+      "license": "GPL-3.0-or-later",
+      "kind": "http",
+      "url": "https://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.xz",
+      "sha256": "f14c83cfebcc9427f2c3cea7258bd90df972d92eb26752da4ddad81c87a0faa4",
+      "size": 1292296,
+      "platforms": [
+        "osx"
+      ],
+      "note": "Build-time dependency (not a runtime library)."
+    },
+    {
+      "name": "automake",
+      "version": "1.16.5",
+      "license": "GPL-2.0-or-later",
+      "kind": "http",
+      "url": "https://ftp.gnu.org/gnu/automake/automake-1.16.5.tar.xz",
+      "sha256": "f01d58cd6d9d77fbdca9eb4bbd5ead1988228fdb73d6f7a201f5f8d6b118b469",
+      "size": 1601740,
+      "platforms": [
+        "osx"
+      ],
+      "note": "Build-time dependency (not a runtime library)."
+    },
+    {
+      "name": "libtool",
+      "version": "2.4.7",
+      "license": "GPL-2.0-or-later",
+      "kind": "http",
+      "url": "https://ftp.gnu.org/gnu/libtool/libtool-2.4.7.tar.xz",
+      "sha256": "4f7f217f057ce655ff22559ad221a0fd8ef84ad1fc5fcb6990cecc333aa1635d",
+      "size": 1016040,
+      "platforms": [
+        "osx"
+      ],
+      "note": "Build-time dependency (not a runtime library)."
+    },
+    {
+      "name": "zlib",
+      "version": "1.3.2",
+      "license": "Zlib",
+      "kind": "http",
+      "url": "https://zlib.net/zlib-1.3.2.tar.xz",
+      "sha256": "d7a0654783a4da529d1bb793b7ad9c3318020af77667bcae35f95d0e42a792f3",
+      "size": 1320064,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "bzip2",
+      "version": "1.0.8",
+      "license": "bzip2-1.0.6",
+      "kind": "http",
+      "url": "https://www.sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz",
+      "sha256": "ab5a03176ee106d3f0fa90e381da478ddae405918153cca248e682cd0c4a2269",
+      "size": 810029,
+      "platforms": [
+        "linux"
+      ]
+    },
+    {
+      "name": "xz",
+      "version": "5.8.3",
+      "license": "0BSD",
+      "kind": "http",
+      "url": "https://tukaani.org/xz/xz-5.8.3.tar.gz",
+      "sha256": "3d3a1b973af218114f4f889bbaa2f4c037deaae0c8e815eec381c3d546b974a0",
+      "size": 2771455,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "liblzma is 0BSD; getopt_long in lib/ is LGPL-2.1-or-later and some build scripts are GPL-2.0/GPL-3.0 (see COPYING, COPYING.0BSD, COPYING.GPLv2, COPYING.GPLv3)."
+    },
+    {
+      "name": "unrar",
+      "version": "7.2.2",
+      "license": "LicenseRef-UnRAR",
+      "kind": "http",
+      "url": "https://www.rarlab.com/rar/unrarsrc-7.2.2.tar.gz",
+      "sha256": "41c00c8755cf5bf6b5d7f0d2d167ee889c2c5352e17e5c9470dbc354af1e71ab",
+      "size": 269820,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "Non-SPDX freeware \"UnRAR\" license (unrar/license.txt); source is free to use verbatim but may not be used to create a RAR-compatible archiver (see license.txt)."
+    },
+    {
+      "name": "libbrotli",
+      "version": "1.2.0",
+      "license": "MIT",
+      "kind": "http",
+      "url": "https://github.com/google/brotli/archive/refs/tags/v1.2.0.tar.gz",
+      "sha256": "816c96e8e8f193b40151dad7e8ff37b1221d019dbcb9c35cd3fadbfe6477dfec",
+      "size": 646315,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "libdeflate",
+      "version": "1.24",
+      "license": "MIT",
+      "kind": "http",
+      "url": "https://github.com/ebiggers/libdeflate/releases/download/v1.24/libdeflate-1.24.tar.gz",
+      "sha256": "a0dda1c4b804742066db07b9510876edd09cc0ca06cdc32c5dfe1b2016a26463",
+      "size": 186668,
+      "platforms": [
+        "linux"
+      ]
+    },
+    {
+      "name": "zstd",
+      "version": "1.5.7",
+      "license": "BSD-3-Clause",
+      "kind": "http",
+      "url": "https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz",
+      "sha256": "eb33e51f49a15e023950cd7825ca74a4a2b43db8354825ac24fc1b7ee09e6fa3",
+      "size": 2434947,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "sources.json/bpy license map says BSD-2-Clause, but LICENSE has the third \"Neither the name ...\" clause -> BSD-3-Clause."
+    },
+    {
+      "name": "expat",
+      "version": "2.7.3",
+      "license": "MIT",
+      "kind": "http",
+      "url": "https://github.com/libexpat/libexpat/releases/download/R_2_7_3/expat-2.7.3.tar.bz2",
+      "sha256": "59c31441fec9a66205307749eccfee551055f2d792f329f18d97099e919a3b2f",
+      "size": 646921,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "sqlite",
+      "version": "3.53.2",
+      "license": "blessing",
+      "kind": "http",
+      "url": "https://www.sqlite.org/2026/sqlite-autoconf-3530200.tar.gz",
+      "sha256": "588ad51949419a56ebe81fe56193d510c559eb94c9a57748387860b5d3069316",
+      "size": 3279926,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "Public-domain \"blessing\" (tea/license.terms); SPDX id \"blessing\"."
+    },
+    {
+      "name": "libffi",
+      "version": "3.5.2",
+      "license": "MIT",
+      "kind": "http",
+      "url": "https://github.com/libffi/libffi/releases/download/v3.5.2/libffi-3.5.2.tar.gz",
+      "sha256": "f3a3082a23b37c293a4fcd1053147b371f2ff91fa7ea1b2a52e335676bac82dc",
+      "size": 1423124,
+      "platforms": [
+        "linux"
+      ]
+    },
+    {
+      "name": "hyphen",
+      "version": "2.8.8",
+      "license": "MPL-1.1 OR GPL-2.0-or-later OR LGPL-2.1-or-later",
+      "kind": "http",
+      "url": "https://downloads.sourceforge.net/hunspell/hyphen-2.8.8.tar.gz",
+      "sha256": "304636d4eccd81a14b6914d07b84c79ebb815288c76fe027b9ebff6ff24d5705",
+      "size": 638369,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "bypy/sources.json pins only a sha1 (0556c392beb59433e577e3517575801212201df6) which matches this file; the sha256 recorded here was computed by me."
+    },
+    {
+      "name": "openssl",
+      "version": "3.5.8",
+      "license": "Apache-2.0",
+      "kind": "http",
+      "url": "https://www.openssl.org/source/openssl-3.5.8.tar.gz",
+      "sha256": "a8f84a39918ec6415ce765d9b429d313ba97b8143169c172e734b9514464f5b2",
+      "size": 53213818,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "ncurses",
+      "version": "6.5",
+      "license": "X11",
+      "kind": "http",
+      "url": "https://ftp.gnu.org/gnu/ncurses/ncurses-6.5.tar.gz",
+      "sha256": "136d91bc269a9a5785e5f9e980bc76ab57428f604ce3e5a5a90cebc767971cc6",
+      "size": 3688489,
+      "platforms": [
+        "linux"
+      ],
+      "note": "Per ncurses test/package/debian/copyright the licence is X11 (MIT-style); COPYING carries the same terms."
+    },
+    {
+      "name": "readline",
+      "version": "8.3",
+      "license": "GPL-3.0-only",
+      "kind": "http",
+      "url": "https://ftp.gnu.org/gnu/readline/readline-8.3.tar.gz",
+      "sha256": "fe5383204467828cd495ee8d1d3c037a7eba1389c22bc6a041f627976f9061cc",
+      "size": 3419642,
+      "platforms": [
+        "linux"
+      ]
+    },
+    {
+      "name": "python",
+      "version": "3.14.7",
+      "license": "PSF-2.0",
+      "kind": "http",
+      "url": "https://www.python.org/ftp/python/3.14.7/Python-3.14.7.tar.xz",
+      "sha256": "3b48dac8fb59f62eaa67ac83c1eb12bda1b7a08406dd286e252c11a66be27f81",
+      "size": 24053924,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "uchardet",
+      "version": "0.0.8",
+      "license": "MPL-1.1",
+      "kind": "http",
+      "url": "https://www.freedesktop.org/software/uchardet/releases/uchardet-0.0.8.tar.xz",
+      "sha256": "e97a60cfc00a1c147a674b097bb1422abd9fa78a2d9ce3f3fdcc2e78a34ac5f0",
+      "size": 222648,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "icu (unix sources)",
+      "version": "78.1",
+      "license": "Unicode-3.0",
+      "kind": "http",
+      "url": "https://github.com/unicode-org/icu/releases/download/release-78.1/icu4c-78.1-sources.tgz",
+      "sha256": "6217f58ca39b23127605cfc6c7e0d3475fe4b0d63157011383d716cb41617886",
+      "size": 27979449,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "COPYING/LICENSE = UNICODE LICENSE V3, SPDX Unicode-3.0."
+    },
+    {
+      "name": "icu (windows sources)",
+      "version": "78.1",
+      "license": "Unicode-3.0",
+      "kind": "http",
+      "url": "https://github.com/unicode-org/icu/releases/download/release-78.1/icu4c-78.1-sources.zip",
+      "sha256": "fe027bcd7e52ab3f3bbbb2d5e9ff9c674e94bbe671bb6a8f58719f27485864da",
+      "size": 29381851,
+      "platforms": [
+        "win"
+      ],
+      "note": "COPYING/LICENSE = UNICODE LICENSE V3, SPDX Unicode-3.0."
+    },
+    {
+      "name": "libstemmer",
+      "version": "3.0.1",
+      "license": "BSD-3-Clause",
+      "kind": "http",
+      "url": "https://snowballstem.org/dist/libstemmer_c-3.0.1.tar.gz",
+      "sha256": "419db89961cf2e30e6417265a4f3c903632d47d6917e7f8c6ae0e4d998743aad",
+      "size": 254255,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "libjpeg",
+      "version": "3.1.2",
+      "license": "IJG AND BSD-3-Clause AND Zlib",
+      "kind": "http",
+      "url": "https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/3.1.2/libjpeg-turbo-3.1.2.tar.gz",
+      "sha256": "8f0012234b464ce50890c490f18194f913a7b1f4e6a03d6644179fa0f867d0cf",
+      "size": 2512033,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "LICENSE.md: IJG + 3-clause BSD + zlib."
+    },
+    {
+      "name": "libpng",
+      "version": "1.6.57",
+      "license": "libpng-2.0",
+      "kind": "http",
+      "url": "https://downloads.sourceforge.net/sourceforge/libpng/libpng-1.6.57.tar.xz",
+      "sha256": "d10c20d7171569804cae8dfc13ba6dcd0662c41ed39d43d4d429314aafb10a80",
+      "size": 1069484,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "libjbig",
+      "version": "2.1",
+      "license": "GPL-2.0-or-later",
+      "kind": "http",
+      "url": "https://www.cl.cam.ac.uk/~mgk25/jbigkit/download/jbigkit-2.1.tar.gz",
+      "sha256": "de7106b6bfaf495d6865c7dd7ac6ca1381bd12e0d81405ea81e7f2167263d932",
+      "size": 438710,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "libtiff",
+      "version": "4.7.1",
+      "license": "libtiff",
+      "kind": "http",
+      "url": "http://download.osgeo.org/libtiff/tiff-4.7.1.tar.xz",
+      "sha256": "b92017489bdc1db3a4c97191aa4b75366673cb746de0dce5d7a749d5954681ba",
+      "size": 2358600,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "libwebp",
+      "version": "1.6.0",
+      "license": "BSD-3-Clause",
+      "kind": "http",
+      "url": "http://downloads.webmproject.org/releases/webp/libwebp-1.6.0.tar.gz",
+      "sha256": "e4ab7009bf0629fd11982d4c2aa83964cf244cffba7347ecd39019a9e38c4564",
+      "size": 4296070,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "jxrlib",
+      "version": "0.2.4",
+      "license": "GPL-2.0-or-later",
+      "kind": "http",
+      "url": "https://github.com/glencoesoftware/jxrlib/archive/v0.2.4.tar.gz",
+      "sha256": "324af02e341bcb9e3b31a6d6892f47231f95f9f87ab4fe7645be619dcaf965a7",
+      "size": 7646008,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "No LICENSE/COPYING file exists in the repository; the licence is declared in the source file headers, e.g. cpp/jxrdecode.cpp: \"GNU General Public License ... version 2 of the License, or (at your option) any later version\" (GPL-2.0-or-later)."
+    },
+    {
+      "name": "freetype",
+      "version": "2.14.1",
+      "license": "FTL OR GPL-2.0-only",
+      "kind": "http",
+      "url": "https://download.savannah.gnu.org/releases/freetype/freetype-2.14.1.tar.xz",
+      "sha256": "32427e8c471ac095853212a37aef816c60b42052d4d9e48230bab3bdf2936ccc",
+      "size": 2664948,
+      "platforms": [
+        "osx",
+        "win"
+      ],
+      "note": "LICENSE.TXT: dual FTL or GPL-2.0-only."
+    },
+    {
+      "name": "graphite",
+      "version": "1.3.14",
+      "license": "LGPL-2.1-or-later",
+      "kind": "http",
+      "url": "https://downloads.sourceforge.net/silgraphite/graphite2-1.3.14.tgz",
+      "sha256": "f99d1c13aa5fa296898a181dff9b82fb25f6cc0933dbaa7a475d8109bd54209d",
+      "size": 6630061,
+      "platforms": [
+        "linux"
+      ]
+    },
+    {
+      "name": "fontconfig",
+      "version": "2.17.1",
+      "license": "MIT",
+      "kind": "http",
+      "url": "https://gitlab.freedesktop.org/api/v4/projects/890/packages/generic/fontconfig/2.17.1/fontconfig-2.17.1.tar.xz",
+      "sha256": "9f5cae93f4fffc1fbc05ae99cdfc708cd60dfd6612ffc0512827025c026fa541",
+      "size": 1326312,
+      "platforms": [
+        "osx"
+      ]
+    },
+    {
+      "name": "iconv (unix sources)",
+      "version": "1.18",
+      "license": "LGPL-2.1-or-later",
+      "kind": "http",
+      "url": "https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.18.tar.gz",
+      "sha256": "3b08f5f4f9b4eb82f151a7040bfd6fe6c6fb922efe4b1659c66ea933276965e8",
+      "size": 5822590,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "iconv (windows sources)",
+      "version": "1.18",
+      "license": "LGPL-2.1-or-later",
+      "kind": "http",
+      "url": "https://github.com/pffang/libiconv-for-Windows/archive/1353455a6c4e15c9db6865fd9c2bf7203b59c0ec.zip",
+      "sha256": "61b4445e67a3855945f88908c3c86801ef328feac15ef558b7e471269eca49fb",
+      "size": 6129998,
+      "platforms": [
+        "win"
+      ]
+    },
+    {
+      "name": "libxml2",
+      "version": "2.15.4",
+      "license": "MIT",
+      "kind": "http",
+      "url": "https://download.gnome.org/sources/libxml2/2.15/libxml2-2.15.4.tar.xz",
+      "sha256": "98087fd181d9070724f3fbc65c7377db03038eb92bd882374daff44940138821",
+      "size": 3177444,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "libxslt",
+      "version": "1.1.45",
+      "license": "MIT",
+      "kind": "http",
+      "url": "https://download.gnome.org/sources/libxslt/1.1/libxslt-1.1.45.tar.xz",
+      "sha256": "9acfe68419c4d06a45c550321b3212762d92f41465062ca4ea19e632ee5d216e",
+      "size": 1519992,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "optipng",
+      "version": "7.9.1",
+      "license": "Zlib",
+      "kind": "http",
+      "url": "https://downloads.sourceforge.net/sourceforge/optipng/optipng-7.9.1.tar.gz",
+      "sha256": "c2579be58c2c66dae9d63154edcb3d427fef64cb00ec0aff079c9d156ec46f29",
+      "size": 3334056,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "mozjpeg",
+      "version": "4.1.5",
+      "license": "IJG AND BSD-3-Clause AND Zlib",
+      "kind": "http",
+      "url": "https://github.com/mozilla/mozjpeg/archive/v4.1.5.tar.gz",
+      "sha256": "9fcbb7171f6ac383f5b391175d6fb3acde5e64c4c4727274eade84ed0998fcc1",
+      "size": 2313651,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "LICENSE.md: IJG + 3-clause BSD + zlib."
+    },
+    {
+      "name": "libusb",
+      "version": "1.0.30",
+      "license": "LGPL-2.1-or-later",
+      "kind": "http",
+      "url": "https://github.com/libusb/libusb/releases/download/v1.0.30/libusb-1.0.30.tar.bz2",
+      "sha256": "fea36f34f9156400209595e300840767ab1a385ede1dc7ee893015aea9c6dbaf",
+      "size": 656112,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "libmtp",
+      "version": "1.1.22",
+      "license": "LGPL-2.1-or-later",
+      "kind": "http",
+      "url": "https://downloads.sourceforge.net/libmtp/libmtp-1.1.22.tar.gz",
+      "sha256": "c3fcf411aea9cb9643590cbc9df99fa5fe30adcac695024442973d76fa5f87bc",
+      "size": 900914,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "openjpeg",
+      "version": "2.5.4",
+      "license": "BSD-2-Clause",
+      "kind": "http",
+      "url": "https://github.com/uclouvain/openjpeg/archive/v2.5.4/openjpeg-2.5.4.tar.gz",
+      "sha256": "a695fbe19c0165f295a8531b1e4e855cd94d0875d2f88ec4b61080677e27188a",
+      "size": 2157028,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "lcms2",
+      "version": "2.17",
+      "license": "MIT",
+      "kind": "http",
+      "url": "https://github.com/mm2/Little-CMS/releases/download/lcms2.17/lcms2-2.17.tar.gz",
+      "sha256": "d11af569e42a1baa1650d20ad61d12e41af4fead4aa7964a01f93b08b53ab074",
+      "size": 5245319,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "poppler",
+      "version": "25.11.0",
+      "license": "GPL-2.0-or-later",
+      "kind": "http",
+      "url": "https://poppler.freedesktop.org/poppler-25.11.0.tar.xz",
+      "sha256": "63f155142b77349e2bccaef148e754e7506ab1641e713b83af4f54a8f8b15369",
+      "size": 1988596,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "podofo",
+      "version": "1.1.2",
+      "license": "LGPL-2.0-or-later OR MPL-2.0",
+      "kind": "http",
+      "url": "https://github.com/podofo/podofo/archive/refs/tags/1.1.2.tar.gz",
+      "sha256": "d6ffe6fc173ac6d6e5b00f5cb9db01990cab1bdf7cc03bdeffce3013bc9ec63a",
+      "size": 4390554,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "README.md: library under LGPL-2.0-or-later or MPL-2.0 (COPYING.LGPL, COPYING.MPL)."
+    },
+    {
+      "name": "libgpg-error",
+      "version": "1.56",
+      "license": "LGPL-2.1-or-later",
+      "kind": "http",
+      "url": "https://gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-1.56.tar.bz2",
+      "sha256": "82c3d2deb4ad96ad3925d6f9f124fe7205716055ab50e291116ef27975d169c0",
+      "size": 1116017,
+      "platforms": [
+        "linux"
+      ]
+    },
+    {
+      "name": "libgcrypt",
+      "version": "1.11.3",
+      "license": "LGPL-2.1-or-later",
+      "kind": "http",
+      "url": "https://gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-1.11.3.tar.bz2",
+      "sha256": "2c6d562e894b2b06eefbc427d12d51ee9d3e50e90012ad6596b4cb3e421a95f2",
+      "size": 4243658,
+      "platforms": [
+        "linux"
+      ]
+    },
+    {
+      "name": "glib",
+      "version": "2.88.1",
+      "license": "LGPL-2.1-or-later",
+      "kind": "http",
+      "url": "https://ftp.gnome.org/pub/GNOME/sources/glib/2.88/glib-2.88.1.tar.xz",
+      "sha256": "51ab804c56f6eab3e5045c774d1290ac5e4c923d4f9a3d8e33123bee45c1840e",
+      "size": 5789296,
+      "platforms": [
+        "linux"
+      ]
+    },
+    {
+      "name": "dbus",
+      "version": "1.16.2",
+      "license": "AFL-2.1 OR GPL-2.0-or-later",
+      "kind": "http",
+      "url": "https://dbus.freedesktop.org/releases/dbus/dbus-1.16.2.tar.xz",
+      "sha256": "0ba2a1a4b16afe7bceb2c07e9ce99a8c2c3508e5dec290dbb643384bd6beb7e2",
+      "size": 1115644,
+      "platforms": [
+        "linux"
+      ],
+      "note": "COPYING: AFL-2.1 or GPL-2.0-or-later."
+    },
+    {
+      "name": "dbusglib",
+      "version": "0.114",
+      "license": "AFL-2.1 OR GPL-2.0-or-later",
+      "kind": "http",
+      "url": "https://dbus.freedesktop.org/releases/dbus-glib/dbus-glib-0.114.tar.gz",
+      "sha256": "c09c5c085b2a0e391b8ee7d783a1d63fe444e96717cc1814d61b5e8fc2827a7c",
+      "size": 737791,
+      "platforms": [
+        "linux"
+      ],
+      "note": "COPYING: AFL-2.1 or GPL-2.0-or-later."
+    },
+    {
+      "name": "gnuwin32",
+      "version": "1",
+      "license": "GPL-2.0-or-later",
+      "kind": "http",
+      "url": "http://download.qt.io/development_releases/gnuwin32/gnuwin32.zip",
+      "sha256": "4a9dc893cc0a1695a16102a42ef47ef2e228652891f4afea67fadd452b63656b",
+      "size": 2004086,
+      "platforms": [
+        "win"
+      ],
+      "note": "Bundle of miscellaneous gnuwin32 tools (Qt development-releases mirror); COPYING found is gperf's GPLv2, most bundled tools are GPL. Build-time dependency (not a runtime library)."
+    },
+    {
+      "name": "hunspell (unix sources)",
+      "version": "1.7.2",
+      "license": "LGPL-2.1-or-later OR GPL-2.0-or-later OR MPL-1.1",
+      "kind": "http",
+      "url": "https://github.com/hunspell/hunspell/releases/download/v1.7.2/hunspell-1.7.2.tar.gz",
+      "sha256": "11ddfa39afe28c28539fe65fc4f1592d410c1e9b6dd7d8a91ca25d85e9ec65b8",
+      "size": 1536202,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "hunspell (windows sources)",
+      "version": "1.7.2",
+      "license": "LGPL-2.1-or-later OR GPL-2.0-or-later OR MPL-1.1",
+      "kind": "http",
+      "url": "https://github.com/hunspell/hunspell/archive/refs/tags/v1.7.2.zip",
+      "sha256": "1d6b3ea1ab9ad4603335f0a663f260e88814d5f35b0ab69f0f24f6c19c02a3e1",
+      "size": 1307371,
+      "platforms": [
+        "win"
+      ]
+    },
+    {
+      "name": "ninja",
+      "version": "1.13.2",
+      "license": "Apache-2.0",
+      "kind": "http",
+      "url": "https://github.com/ninja-build/ninja/archive/refs/tags/v1.13.2.tar.gz",
+      "sha256": "974d6b2f4eeefa25625d34da3cb36bdcebe7fbce40f4c16ac0835fd1c0cbae17",
+      "size": 292385,
+      "platforms": [
+        "osx",
+        "win"
+      ],
+      "note": "Build-time dependency (not a runtime library)."
+    },
+    {
+      "name": "nodejs",
+      "version": "22.22.0",
+      "license": "MIT",
+      "kind": "http",
+      "url": "https://github.com/nodejs/node/archive/refs/tags/v22.22.0.tar.gz",
+      "sha256": "b7f40aadbf71df0d78a2239f593e4f14bf2f129fd9c5643f024c68ec1b48a854",
+      "size": 129435366,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "Build-time dependency (not a runtime library)."
+    },
+    {
+      "name": "ffmpeg",
+      "version": "7.1.2",
+      "license": "LGPL-2.1-or-later",
+      "kind": "http",
+      "url": "https://www.ffmpeg.org/releases/ffmpeg-7.1.2.tar.xz",
+      "sha256": "089bc60fb59d6aecc5d994ff530fd0dcb3ee39aa55867849a2bbc4e555f9c304",
+      "size": 11030368,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "Source contains COPYING.LGPLv2.1 / COPYING.LGPLv3 / COPYING.GPLv2 / COPYING.GPLv3; calibre builds the LGPL-2.1-or-later configuration (see note in bypy/sources.json)."
+    },
+    {
+      "name": "speech-dispatcher-client",
+      "version": "0.12.1",
+      "license": "GPL-2.0-or-later",
+      "kind": "http",
+      "url": "https://github.com/brailcom/speechd/releases/download/0.12.1/speech-dispatcher-0.12.1.tar.gz",
+      "sha256": "b14a5238d287d2dcce4dd42bbd66ca65fa228e7e683708267f7b34036f7ba4b4",
+      "size": 7483246,
+      "platforms": [
+        "linux"
+      ]
+    },
+    {
+      "name": "onnx",
+      "version": "1.23.2",
+      "license": "MIT",
+      "kind": "http",
+      "url": "https://github.com/microsoft/onnxruntime/archive/refs/tags/v1.23.2.tar.gz",
+      "sha256": "99bcf964ce4e869d823c99b2294562a9050cbfa8e76ec81c8683cb3c7e19c2b4",
+      "size": 283165408,
+      "platforms": [
+        "osx",
+        "linux"
+      ]
+    },
+    {
+      "name": "espeak",
+      "version": "a4ca101c99de35345f89df58195b2159748b7092",
+      "license": "GPL-3.0-or-later",
+      "kind": "http",
+      "url": "https://github.com/espeak-ng/espeak-ng/archive/a4ca101c99de35345f89df58195b2159748b7092.zip",
+      "sha256": "3cbbd7bb84bc9b4391c3f3bb86750094a38f4bd6fcdc4fda7e2516d2955d3366",
+      "size": 20199229,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "COPYING is GPLv3; source headers say \"version 3 of the License, or (at your option) any later version\" -> GPL-3.0-or-later."
+    },
+    {
+      "name": "qt-base",
+      "version": "6.10.1",
+      "license": "GPL-3.0-only OR LGPL-3.0-only",
+      "kind": "http",
+      "url": "https://download.qt.io/official_releases/qt/6.10/6.10.1/submodules/qtbase-everywhere-src-6.10.1.tar.xz",
+      "sha256": "5a6226f7e23db51fdc3223121eba53f3f5447cf0cc4d6cb82a3a2df7a65d265d",
+      "size": 50234516,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "Qt open-source modules: GPL-3.0-only or LGPL-3.0-only (LICENSES/GPL-3.0-only.txt, LGPL-3.0-only.txt)."
+    },
+    {
+      "name": "qt-svg",
+      "version": "6.10.1",
+      "license": "GPL-3.0-only OR LGPL-3.0-only",
+      "kind": "http",
+      "url": "https://download.qt.io/official_releases/qt/6.10/6.10.1/submodules/qtsvg-everywhere-src-6.10.1.tar.xz",
+      "sha256": "c02f355a58f3bbcf404a628bf488b6aeb2d84a94c269afdb86f6e529343ab01f",
+      "size": 2613980,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "Qt open-source modules: GPL-3.0-only or LGPL-3.0-only (LICENSES/GPL-3.0-only.txt, LGPL-3.0-only.txt)."
+    },
+    {
+      "name": "qt-shadertools",
+      "version": "6.10.1",
+      "license": "GPL-3.0-only OR LGPL-3.0-only",
+      "kind": "http",
+      "url": "https://download.qt.io/official_releases/qt/6.10/6.10.1/submodules/qtshadertools-everywhere-src-6.10.1.tar.xz",
+      "sha256": "b67894a63352b53dad0d46f5300c62b8cd6783db575492d6b25d4fdc9af55bb6",
+      "size": 1152220,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "Qt open-source modules: GPL-3.0-only or LGPL-3.0-only (LICENSES/GPL-3.0-only.txt, LGPL-3.0-only.txt)."
+    },
+    {
+      "name": "qt-declarative",
+      "version": "6.10.1",
+      "license": "GPL-3.0-only OR LGPL-3.0-only",
+      "kind": "http",
+      "url": "https://download.qt.io/official_releases/qt/6.10/6.10.1/submodules/qtdeclarative-everywhere-src-6.10.1.tar.xz",
+      "sha256": "4fb4efb894e0b96288543505d69794d684bcfbe4940ce181d3e6817bda54843e",
+      "size": 37552260,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "Qt open-source modules: GPL-3.0-only or LGPL-3.0-only (LICENSES/GPL-3.0-only.txt, LGPL-3.0-only.txt)."
+    },
+    {
+      "name": "qt-imageformats",
+      "version": "6.10.1",
+      "license": "GPL-3.0-only OR LGPL-3.0-only",
+      "kind": "http",
+      "url": "https://download.qt.io/official_releases/qt/6.10/6.10.1/submodules/qtimageformats-everywhere-src-6.10.1.tar.xz",
+      "sha256": "498eabdf2381db96f808942b3e3c765f6360fe6c0e9961f0a45ff7a4c68d7a72",
+      "size": 2032448,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "Qt open-source modules: GPL-3.0-only or LGPL-3.0-only (LICENSES/GPL-3.0-only.txt, LGPL-3.0-only.txt)."
+    },
+    {
+      "name": "qt-webchannel",
+      "version": "6.10.1",
+      "license": "GPL-3.0-only OR LGPL-3.0-only",
+      "kind": "http",
+      "url": "https://download.qt.io/official_releases/qt/6.10/6.10.1/submodules/qtwebchannel-everywhere-src-6.10.1.tar.xz",
+      "sha256": "7ba16925f230e60f58efce02c1ce214bcb6b0740e24f5dd40c06f40f37d93111",
+      "size": 194020,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "Qt open-source modules: GPL-3.0-only or LGPL-3.0-only (LICENSES/GPL-3.0-only.txt, LGPL-3.0-only.txt)."
+    },
+    {
+      "name": "qt-positioning",
+      "version": "6.10.1",
+      "license": "GPL-3.0-only OR LGPL-3.0-only",
+      "kind": "http",
+      "url": "https://download.qt.io/official_releases/qt/6.10/6.10.1/submodules/qtpositioning-everywhere-src-6.10.1.tar.xz",
+      "sha256": "abb311ef1bd6e39f090d22480e265d13f8537d2e2f4c88f22d6519547f46be23",
+      "size": 649012,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "Qt open-source modules: GPL-3.0-only or LGPL-3.0-only (LICENSES/GPL-3.0-only.txt, LGPL-3.0-only.txt)."
+    },
+    {
+      "name": "qt-wayland",
+      "version": "6.10.1",
+      "license": "GPL-3.0-only OR LGPL-3.0-only",
+      "kind": "http",
+      "url": "https://download.qt.io/official_releases/qt/6.10/6.10.1/submodules/qtwayland-everywhere-src-6.10.1.tar.xz",
+      "sha256": "49bf6db800227a6b2c971f4c5d03dd1e81297e7ffb296ce4a96437304f27cb13",
+      "size": 901632,
+      "platforms": [
+        "linux"
+      ],
+      "note": "Qt open-source modules: GPL-3.0-only or LGPL-3.0-only (LICENSES/GPL-3.0-only.txt, LGPL-3.0-only.txt)."
+    },
+    {
+      "name": "qt-sensors",
+      "version": "6.10.1",
+      "license": "GPL-3.0-only OR LGPL-3.0-only",
+      "kind": "http",
+      "url": "https://download.qt.io/official_releases/qt/6.10/6.10.1/submodules/qtsensors-everywhere-src-6.10.1.tar.xz",
+      "sha256": "49ce9ce033234689706dfcacef4eac7e562cff127cacc889ffcb3b68d684b395",
+      "size": 1485444,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "Qt open-source modules: GPL-3.0-only or LGPL-3.0-only (LICENSES/GPL-3.0-only.txt, LGPL-3.0-only.txt)."
+    },
+    {
+      "name": "qt-multimedia",
+      "version": "6.10.1",
+      "license": "GPL-3.0-only OR LGPL-3.0-only",
+      "kind": "http",
+      "url": "https://download.qt.io/official_releases/qt/6.10/6.10.1/submodules/qtmultimedia-everywhere-src-6.10.1.tar.xz",
+      "sha256": "f7a4f9bc2840d4f0f9f7329f0dcb3d3500c54177b8e368091a3727c7320e67b8",
+      "size": 9923496,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "Qt open-source modules: GPL-3.0-only or LGPL-3.0-only (LICENSES/GPL-3.0-only.txt, LGPL-3.0-only.txt)."
+    },
+    {
+      "name": "qt-speech",
+      "version": "6.10.1",
+      "license": "GPL-3.0-only OR LGPL-3.0-only",
+      "kind": "http",
+      "url": "https://download.qt.io/official_releases/qt/6.10/6.10.1/submodules/qtspeech-everywhere-src-6.10.1.tar.xz",
+      "sha256": "42caec540f6e10de8628819d10477ed2dc202134753ea68dfc1aa536108b7f4f",
+      "size": 248024,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "Qt open-source modules: GPL-3.0-only or LGPL-3.0-only (LICENSES/GPL-3.0-only.txt, LGPL-3.0-only.txt)."
+    },
+    {
+      "name": "qt-webengine",
+      "version": "6.10.1",
+      "license": "GPL-3.0-only OR LGPL-3.0-only",
+      "kind": "http",
+      "url": "https://download.qt.io/official_releases/qt/6.10/6.10.1/submodules/qtwebengine-everywhere-src-6.10.1.tar.xz",
+      "sha256": "77b5ea6186a0429a6b8e656faedd5cd3e8019d33856ee59637698ab578ead1e3",
+      "size": 881148292,
+      "platforms": [
+        "osx",
+        "linux"
+      ],
+      "note": "Qt open-source modules: GPL-3.0-only or LGPL-3.0-only (LICENSES/GPL-3.0-only.txt, LGPL-3.0-only.txt)."
+    },
+    {
+      "name": "chmlib",
+      "version": "0.40",
+      "license": "LGPL-2.1-or-later",
+      "kind": "http",
+      "url": "https://web.archive.org/web/2020id_/http://www.jedrea.com/chmlib/chmlib-0.40.tar.bz2",
+      "sha256": "3449d64b0cf71578b2c7e3ddc048d4af3661f44a83941ea074a7813f3a59ffa3",
+      "size": 252036,
+      "platforms": [
+        "linux",
+        "osx",
+        "win"
+      ],
+      "note": "license file: chmlib-0.40/COPYING. Original URL http://www.jedrea.com/chmlib/chmlib-0.40.tar.bz2 is dead (HTTP 404); fetched from the Wayback Machine. sha1 5231d7531e8808420d7f89fd1e4fdbac1ed7a167 matches the sha1 published in bypy/sources.json."
+    },
+    {
+      "name": "calibre",
+      "version": "9.15.0",
+      "license": "GPL-3.0-only",
+      "kind": "git",
+      "url": "https://github.com/kovidgoyal/calibre",
+      "ref": "6a97bf55cbbab094d5f0e28ff812c6d4b158535d",
+      "submodules": false,
+      "note": "Peeled commit of annotated tag v9.15.0 (tag object 4392641ed105d0913f8d63db83bd4fae42e0105d). Contains the application source (GPL-3.0-only per LICENSE) and the bypy/ dependency build scripts."
+    },
+    {
+      "name": "bypy",
+      "version": "master",
+      "license": "GPL-3.0-only",
+      "kind": "git",
+      "url": "https://github.com/kovidgoyal/bypy",
+      "ref": "2a2d73ab6b41c8ba121493bcb72e0aad68887d7c",
+      "submodules": false,
+      "note": "calibre dependency build tooling (GPLv3 per file headers). No version tags exist in the bypy repo; this is the master HEAD at research time. The per-release bypy scripts/config also ship inside the calibre repo under bypy/ at the v9.15.0 commit."
+    },
+    {
+      "name": "easylzma",
+      "version": "3b53709da1f2c57b9695019266bca338d7cdb734",
+      "license": "LicenseRef-public-domain",
+      "kind": "git",
+      "url": "https://github.com/kovidgoyal/easylzma",
+      "ref": "3b53709da1f2c57b9695019266bca338d7cdb734",
+      "submodules": false,
+      "note": "sources.json used the pseudo-URL github:kovidgoyal/easylzma (a GitHub API tarball, not content-addressable); pinned to the commit named in the sources.json version field instead. bypy license map marks it BSD-2-Clause but comments it as actually public domain; no LICENSE file in repo."
+    },
+    {
+      "name": "nv-codec-headers",
+      "version": "11.1",
+      "license": "MIT",
+      "kind": "git",
+      "url": "https://github.com/FFmpeg/nv-codec-headers",
+      "ref": "833faee5f7b8d3f56444347c587f4aed11ee213f",
+      "submodules": false,
+      "note": "Commit is the tip of branch refs/heads/sdk/11.1 (2026-07-14, before the 9.15.0 release). sources.json pins that branch URL with sha256 d0262edcd464c36eddd35c754faf29799161a30b4f8635a4aa06f9ecedf053e, which is not reproducible (branch-tip archive changes with GitHub archive generation); pinning the commit is authoritative. MIT per include/ffnvcodec/*.h headers."
+    }
+  ]
+}

@@ -95,6 +95,20 @@ func cmdLocal(args []string) error {
 			return err
 		}
 	}
+	// Corresponding Source of the bundled GPL/LGPL/AGPL engines: built (or reused) next to the packages.
+	if err := verifySources(); err != nil {
+		return err
+	}
+	sourcesDir := filepath.Join(distAbs, "sources")
+	if err := cmdSources([]string{"--dist", sourcesDir}); err != nil {
+		return err
+	}
+	srcFiles, _ := filepath.Glob(filepath.Join(sourcesDir, "filee-cli-*-source-*"))
+	for _, f := range srcFiles {
+		if err := copyFile(f, filepath.Join(releaseDir, filepath.Base(f))); err != nil {
+			return err
+		}
+	}
 	fmt.Println("\n=== release files ===")
 	if err := cmdRelease([]string{releaseDir, "--tag", tag}); err != nil {
 		return err
@@ -142,7 +156,7 @@ mkdir -p /tmp/unpacked && tar -xzf /out/filee-cli-*-"$RID".tar.gz -C /tmp/unpack
 const smokeScript = `set -euxo pipefail
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-apt-get install -y -qq --no-install-recommends ca-certificates libc6 libgcc-s1 libicu70 libssl3 libstdc++6 tzdata zlib1g fonts-noto-cjk >/dev/null
+apt-get install -y -qq --no-install-recommends ca-certificates libc6 libgcc-s1 libicu70 libssl3 libstdc++6 tzdata zlib1g fonts-noto-cjk libxcb1 libxkbcommon0 libfontconfig1 libfreetype6 libx11-6 libegl1 libopengl0 libglx0 >/dev/null
 /filee-build smoke /out/filee-cli-*-"$RID".tar.gz
 `
 
@@ -265,11 +279,14 @@ func localWindows(rid, dist string, up Upstream, host, dir, dotnet string) error
 		return err
 	}
 	remote := func(command string) error {
-		_, err := run(runOpts{}, "ssh", host, command)
+		_, err := run(runOpts{}, "ssh", "-o", "ServerAliveInterval=30", "-o", "ServerAliveCountMax=40", host, command)
 		return err
 	}
 	scpTarget := func(p string) string { return host + ":" + strings.ReplaceAll(p, `\`, "/") }
-	if err := remote(fmt.Sprintf(`(if exist "%[1]s" rmdir /s /q "%[1]s") & mkdir "%[1]s"`, dir)); err != nil {
+	// The download cache lives outside the work folder (linked in as .cache) so engine downloads survive between runs;
+	// the link is removed first, so clearing the work folder never touches the cache.
+	cache := dir + "-cache"
+	if err := remote(fmt.Sprintf(`(if exist "%[1]s\.cache" rmdir "%[1]s\.cache") & (if exist "%[1]s" rmdir /s /q "%[1]s") & mkdir "%[1]s" & (if not exist "%[2]s" mkdir "%[2]s") & mklink /J "%[1]s\.cache" "%[2]s"`, dir, cache)); err != nil {
 		return err
 	}
 	for _, f := range []string{bundle, exe} {

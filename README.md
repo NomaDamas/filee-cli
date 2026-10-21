@@ -76,22 +76,52 @@ needs; see the package's `README.md`.
 | `filee-cli`, `*.dll`/`*.so`/`*.dylib`, `filee-cli.deps.json` | the program, the .NET runtime and native libraries |
 | `engines/rhwp/` | rhwp (MIT), HWP/HWPX → PDF. Linux builds are compiled from source on Ubuntu 22.04 |
 | `engines/7zip/` | 7-Zip (LGPL-2.1+, unRAR restriction on the RAR code), archives |
+| `engines/pandoc/`, `engines/calibre/`, `engines/libreoffice/` (macOS, Windows), `engines/ffmpeg/` (Linux, Windows), `engines/ghostscript/` (Windows), `engines/h2orestart` + `engines/jre/` (Windows) | the vendors' own unmodified binaries, see below |
 | `LICENSE`, `THIRD-PARTY-NOTICES.md`, `licenses/` | licenses, generated from the package contents |
 | `UPSTREAM.md` | upstream URL, tag, commit, patches, build date, SDK |
 
-### Optional engines (not included)
+### Bundled engines (GPL, LGPL, AGPL and others) and their source
 
-FFmpeg, Pandoc, calibre, Ghostscript, LibreOffice, H2Orestart and a Java runtime are **not distributed** here: most
-are GPL/AGPL. `filee-cli` has no command to download them (the app's *Settings → Engines* does that in the GUI). If you
-install one yourself so that its program is on `PATH` (or in the usual folder, e.g. Homebrew's), `filee-cli` finds it
-and the conversions that need it start working; `filee-cli formats` shows what is available. Licenses and official
-download links are in the "Optional engines, not distributed here" section of `THIRD-PARTY-NOTICES.md`.
+Filee itself is MIT and calls these engines as **separate programs** (`filee-cli` starts them with command-line
+arguments and links none of their code). Each package carries the engines Filee offers on that platform, exactly the
+files upstream's `engines.json` pins (same URL and SHA-256), except FFmpeg on Windows: upstream pins a Gyan.dev build
+whose build scripts are not published, so this repository ships the BtbN GPL build of the same FFmpeg release, whose
+every dependency is pinned. Each engine keeps its license; the full list with versions, SHA-256 and licenses is in the
+package's `THIRD-PARTY-NOTICES.md`.
+
+| Engine | Where | License | Source |
+|---|---|---|---|
+| Pandoc 3.12 | all | GPL-2.0-or-later | hosted: `filee-cli-<version>-source-pandoc.tar.gz` |
+| FFmpeg 9.0.2 (BtbN build) | Linux, Windows | GPL-3.0-or-later | hosted: `…-source-ffmpeg.tar.gz` |
+| calibre 9.15.0 | all | GPL-3.0 | hosted: `…-source-calibre.tar.gz` |
+| Ghostscript 10.08 | Windows | AGPL-3.0 | hosted: `…-source-ghostscript.tar.gz` |
+| H2Orestart 0.7.14, Eclipse Temurin JRE 21 | Windows | GPL-3.0; GPL-2.0 + Classpath exception | hosted: `…-source-h2orestart.tar.gz`, `…-source-jre.tar.gz` |
+| LibreOffice 26.2.6 | macOS, Windows | MPL-2.0 (+ LGPL/GPL parts) | TDF's own source release, URL and SHA-256 in the notices |
+| Microsoft VC++ runtime | Windows | proprietary redistributable | none exists |
+
+The **Corresponding Source** of the hosted engines is published in the same release as the packages (assets
+`filee-cli-<version>-source-<engine>.tar.gz`, also listed in `SHA256SUMS`). Each holds a `SOURCES.md` (written offer,
+every component with version, license, URL, commit or SHA-256, how the binary was built, and anything that could not be
+pinned) and the pinned sources themselves; the machine-readable pins are in
+[`data/engine-sources/`](data/engine-sources). To drop an engine you do not want, delete its folder under `engines/`:
+only the conversions it provided go away. If you install an engine yourself and put it on `PATH`, `filee-cli` uses
+the bundled copy first (Filee's lookup order), then the one on `PATH`.
+
+Engines Filee can use on another platform but that this package does not carry (for example Ghostscript on macOS) are
+listed in the "Optional engines, not distributed here" section of `THIRD-PARTY-NOTICES.md` with license and download
+link; install one on `PATH` and `filee-cli` finds it. `filee-cli` has no command to download engines.
+
+On Linux the bundled calibre is a Qt program: it needs `libxcb1 libxkbcommon0 libfontconfig1 libfreetype6 libx11-6
+libegl1 libopengl0 libglx0` (apt names) even without a display. Without them only calibre's conversions (for example
+EPUB → MOBI) fail, with an error naming the missing library.
+
+The packages are large because of this (about 600 MB to 900 MB each). `filee-cli formats` lists what each package can do.
 
 ## How the packages are made
 
 ```
 UPSTREAM (tag + commit) ──► filee-build fetch ──► dotnet publish src/Filee.Cli (self-contained, per RID)
-                                                          + rhwp + 7-Zip (pinned, SHA-256 checked)
+                                                          + rhwp + 7-Zip + the platform's engines (pinned, SHA-256 checked)
                                                           + generated notices, UPSTREAM.md ──► archive ──► smoke test
 ```
 

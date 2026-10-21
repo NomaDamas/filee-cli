@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"compress/gzip"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -137,7 +138,8 @@ func sha256File(path string) (string, error) {
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
-// download fetches url into cache/<sha256> and verifies the hash (a cached file is re-verified).
+// download fetches url into cache/<sha256> and verifies the hash (a cached file is re-verified). A transfer that stalls
+// for a minute is cut and resumed with a Range request (up to 8 attempts), so a slow mirror cannot hang the build.
 func download(url, sha string, cache string) (string, error) {
 	sha = strings.ToLower(sha)
 	if err := os.MkdirAll(cache, 0o755); err != nil {
@@ -149,35 +151,97 @@ func download(url, sha string, cache string) (string, error) {
 	}
 	fmt.Println("get " + url)
 	partial := target + ".partial"
-	client := &http.Client{Timeout: 10 * time.Minute}
-	req, _ := http.NewRequest("GET", url, nil)
+	var lastErr error
+	for attempt := 1; attempt <= 8; attempt++ {
+		done, err := fetchRange(url, partial)
+		if err == nil && done {
+			got, err := sha256File(partial)
+			if err != nil {
+				return "", err
+			}
+			if got == sha {
+				return target, os.Rename(partial, target)
+			}
+			os.Remove(partial)
+			return "", fmt.Errorf("checksum mismatch for %s: expected %s, got %s", url, sha, got)
+		}
+		lastErr = err
+		fmt.Printf("download of %s interrupted (%v); attempt %d of 8\n", url, err, attempt)
+		time.Sleep(time.Duration(attempt) * 2 * time.Second)
+	}
+	return "", fmt.Errorf("GET %s: %w", url, lastErr)
+}
+
+// fetchRange appends the rest of url to partial. done is true when the whole body was received.
+func fetchRange(url, partial string) (done bool, err error) {
+	var have int64
+	if st, err := os.Stat(partial); err == nil {
+		have = st.Size()
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	req, _ := http.NewRequestWithContext(ctx, "GET", url, nil)
 	req.Header.Set("User-Agent", "filee-build")
+	if have > 0 {
+		req.Header.Set("Range", fmt.Sprintf("bytes=%d-", have))
+	}
+	// DisableCompression: some mirrors answer with Content-Encoding: gzip for a .tar.gz, and Go would silently unpack it,
+	// which changes the bytes the pinned SHA-256 is about.
+	client := &http.Client{Transport: &http.Transport{Proxy: http.ProxyFromEnvironment, DisableCompression: true, ResponseHeaderTimeout: time.Minute, TLSHandshakeTimeout: time.Minute}}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return false, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("GET %s: %s", url, resp.Status)
-	}
-	out, err := os.Create(partial)
-	if err != nil {
-		return "", err
-	}
-	if _, err := io.Copy(out, resp.Body); err != nil {
-		out.Close()
-		return "", err
-	}
-	out.Close()
-	got, err := sha256File(partial)
-	if err != nil {
-		return "", err
-	}
-	if got != sha {
+	flags := os.O_CREATE | os.O_WRONLY
+	// A download site that sends an HTML page where an archive is pinned (SourceForge's mirror chooser answers unknown
+	// clients that way) is fetched with curl instead, which it serves the file to. The SHA-256 decides if it is right.
+	if strings.HasPrefix(resp.Header.Get("Content-Type"), "text/html") && !strings.HasSuffix(strings.SplitN(url, "?", 2)[0], ".html") {
+		resp.Body.Close()
+		if _, err := exec.LookPath("curl"); err != nil {
+			return false, fmt.Errorf("%s answered with an HTML page and curl is not available", url)
+		}
 		os.Remove(partial)
-		return "", fmt.Errorf("checksum mismatch for %s: expected %s, got %s", url, sha, got)
+		cmd := exec.Command("curl", "--fail", "--silent", "--show-error", "--location", "--retry", "3", "--connect-timeout", "30", "--speed-limit", "1024", "--speed-time", "60", "--output", partial, url)
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			return false, fmt.Errorf("curl %s: %w", url, err)
+		}
+		return true, nil
 	}
-	return target, os.Rename(partial, target)
+	switch resp.StatusCode {
+	case http.StatusOK:
+		flags |= os.O_TRUNC // the server ignored the range: start over
+	case http.StatusPartialContent:
+		flags |= os.O_APPEND
+	case http.StatusRequestedRangeNotSatisfiable:
+		return true, nil // the partial file already holds everything
+	default:
+		return false, fmt.Errorf("%s", resp.Status)
+	}
+	out, err := os.OpenFile(partial, flags, 0o644)
+	if err != nil {
+		return false, err
+	}
+	defer out.Close()
+	stall := time.AfterFunc(time.Minute, cancel)
+	defer stall.Stop()
+	buf := make([]byte, 1<<20)
+	for {
+		n, rerr := resp.Body.Read(buf)
+		if n > 0 {
+			stall.Reset(time.Minute)
+			if _, werr := out.Write(buf[:n]); werr != nil {
+				return false, werr
+			}
+		}
+		if rerr == io.EOF {
+			return true, nil
+		}
+		if rerr != nil {
+			return false, rerr
+		}
+	}
 }
 
 // rmtree removes a path, clearing read-only bits first (Windows).
@@ -242,11 +306,37 @@ func safeJoin(dest, name string) (string, error) {
 	return filepath.Join(dest, clean), nil
 }
 
-// extractArchive unpacks kind ("zip", "tar.gz", "tar.xz") into dest. Links and special files are refused.
+// pendingLink is a symlink member, created after every regular file so that nothing is ever written through a link.
+type pendingLink struct{ name, target, link string }
+
+// makeLinks creates the collected symlinks. A target must be relative and stay inside dest.
+func makeLinks(dest string, links []pendingLink) error {
+	for _, l := range links {
+		if l.target == "" || filepath.IsAbs(l.target) || strings.HasPrefix(l.target, "/") || strings.HasPrefix(l.target, `\`) {
+			return fmt.Errorf("unsafe symlink %s -> %s (absolute or empty target)", l.name, l.target)
+		}
+		resolved := filepath.Join(filepath.Dir(l.link), filepath.FromSlash(l.target))
+		rel, err := filepath.Rel(dest, resolved)
+		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			return fmt.Errorf("unsafe symlink %s -> %s (leaves the package)", l.name, l.target)
+		}
+		if err := os.MkdirAll(filepath.Dir(l.link), 0o755); err != nil {
+			return err
+		}
+		if err := os.Symlink(filepath.FromSlash(l.target), l.link); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// extractArchive unpacks kind ("zip", "tar.gz", "tar.xz") into dest. Hard links and special files are refused;
+// symlinks are kept when their target is relative and stays inside dest.
 func extractArchive(archive, kind, dest string) error {
 	if err := os.MkdirAll(dest, 0o755); err != nil {
 		return err
 	}
+	var links []pendingLink
 	if kind == "zip" {
 		r, err := zip.OpenReader(archive)
 		if err != nil {
@@ -262,6 +352,19 @@ func extractArchive(archive, kind, dest string) error {
 				if err := os.MkdirAll(target, 0o755); err != nil {
 					return err
 				}
+				continue
+			}
+			if f.Mode()&fs.ModeSymlink != 0 {
+				rc, err := f.Open()
+				if err != nil {
+					return err
+				}
+				data, err := io.ReadAll(io.LimitReader(rc, 4096))
+				rc.Close()
+				if err != nil {
+					return err
+				}
+				links = append(links, pendingLink{f.Name, string(data), target})
 				continue
 			}
 			if !f.Mode().IsRegular() {
@@ -280,7 +383,7 @@ func extractArchive(archive, kind, dest string) error {
 				return err
 			}
 		}
-		return nil
+		return makeLinks(dest, links)
 	}
 	file, err := os.Open(archive)
 	if err != nil {
@@ -309,7 +412,7 @@ func extractArchive(archive, kind, dest string) error {
 	for {
 		h, err := tr.Next()
 		if err == io.EOF {
-			return nil
+			return makeLinks(dest, links)
 		}
 		if err != nil {
 			return err
@@ -330,9 +433,11 @@ func extractArchive(archive, kind, dest string) error {
 			if err := writeFile(target, tr, os.FileMode(h.Mode).Perm()|0o600); err != nil {
 				return err
 			}
+		case tar.TypeSymlink:
+			links = append(links, pendingLink{h.Name, h.Linkname, target})
 		case tar.TypeXGlobalHeader:
 		default:
-			return fmt.Errorf("unsafe archive member (links and special files are not allowed): %s", h.Name)
+			return fmt.Errorf("unsafe archive member (hard links and special files are not allowed): %s", h.Name)
 		}
 	}
 }

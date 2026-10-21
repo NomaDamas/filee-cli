@@ -9,8 +9,11 @@ repository's own scripts), `THIRD-PARTY-NOTICES.md`, `licenses/` and `UPSTREAM.m
 
 * **Corresponding source** for LGPL/MPL parts is named with tag or commit URLs in `THIRD-PARTY-NOTICES.md`
   (7-Zip, the ImageMagick delegate libraries inside Magick.Native, OpenMcdf, UTF.Unknown).
-* **No GPL/AGPL component** is bundled. FFmpeg, Pandoc, calibre, Ghostscript, H2Orestart and Temurin are listed only as
-  optional engines the user installs separately.
+* **GPL, LGPL and AGPL engines are bundled** (Pandoc, FFmpeg, calibre, Ghostscript, H2Orestart, Temurin; LibreOffice is
+  MPL-2.0). They are unmodified vendor binaries started as separate processes, never linked into `filee-cli`. Their
+  Corresponding Source is hosted in the release (`filee-cli-<version>-source-<engine>.tar.gz`) from the pins in
+  `data/engine-sources/`; LibreOffice's source is named by URL and SHA-256 (MPL source availability), and the Microsoft
+  VC++ runtime has no source. Anything that could not be pinned is stated in the `unresolved` lists, never hidden.
 * **7-Zip's unRAR restriction** is repeated in the notices and `engines/7zip/License.txt` ships unchanged.
 
 ## Trademark: unresolved, handled conservatively
