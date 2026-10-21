@@ -1,7 +1,8 @@
 name: Build packages
 
-# Reusable: builds, checks and smoke-tests the five packages from the upstream tag pinned in UPSTREAM.
-# Called by ci.yml (every push and pull request) and release.yml (tags). Uploads one artifact per RID.
+# Reusable: builds, checks and smoke-tests the five packages from the upstream tag pinned in UPSTREAM, using the
+# filee-build Go program (cmd/filee-build). Called by ci.yml and release.yml. Uploads one artifact per RID.
+# While the repository is private these workflows are not used: `filee-build local` does the same on your computers.
 
 on:
   workflow_call:
@@ -9,11 +10,14 @@ on:
 permissions:
   contents: read
 
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  DOTNET_NOLOGO: '1'
+
 jobs:
   # Linux packages are built on Ubuntu 22.04 (glibc 2.35) so they run on that and newer systems.
   # GitHub's arm64 Linux runners are free for public repositories only; a private repository cross-builds
-  # linux-arm64 on x64 (rhwp with the aarch64 cross toolchain, .NET publish is a cross publish by design) and runs the
-  # smoke test in an arm64 container under QEMU. A public repository uses the native arm64 runner.
+  # linux-arm64 on x64 and runs the smoke test in an arm64 container under QEMU.
   linux:
     name: ${{ matrix.rid }}
     strategy:
@@ -22,20 +26,20 @@ jobs:
         rid: [linux-x64, linux-arm64]
     runs-on: ${{ (matrix.rid == 'linux-arm64' && github.event.repository.private == false) && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
     timeout-minutes: 90
-    env:
-      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
-      DOTNET_NOLOGO: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          python-version: '3.12'
+          go-version-file: go.mod
+
+      - name: Build filee-build
+        run: go build -trimpath -o filee-build ./cmd/filee-build
 
       - name: Fetch pinned upstream source
-        run: python scripts/fetch_upstream.py
+        run: ./filee-build fetch
 
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
@@ -52,19 +56,19 @@ jobs:
           fi
 
       - name: Build rhwp from source
-        run: python scripts/build_rhwp_linux.py --rid ${{ matrix.rid }} --output "$RUNNER_TEMP/rhwp" --work "$RUNNER_TEMP/rhwp-work"
+        run: ./filee-build rhwp --rid ${{ matrix.rid }} --output "$RUNNER_TEMP/rhwp" --work "$RUNNER_TEMP/rhwp-work"
 
       - name: Check rhwp against glibc 2.35
-        run: python .upstream/Filee/build/check-elf-glibc.py --max 2.35 --needed "$RUNNER_TEMP/rhwp"
+        run: ./filee-build glibc --max 2.35 --needed "$RUNNER_TEMP/rhwp"
 
       - name: Build package
-        run: python scripts/build_package.py --rid ${{ matrix.rid }} --rhwp-dir "$RUNNER_TEMP/rhwp"
+        run: ./filee-build package --rid ${{ matrix.rid }} --rhwp-dir "$RUNNER_TEMP/rhwp"
 
       - name: Check glibc requirements of every ELF file
         run: |
           mkdir -p "$RUNNER_TEMP/unpacked"
           tar -xzf dist/filee-cli-*-${{ matrix.rid }}.tar.gz -C "$RUNNER_TEMP/unpacked"
-          python .upstream/Filee/build/check-elf-glibc.py --max 2.35 "$RUNNER_TEMP/unpacked"
+          ./filee-build glibc --max 2.35 "$RUNNER_TEMP/unpacked"
 
       - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
         if: ${{ matrix.rid == 'linux-arm64' && github.event.repository.private }}
@@ -72,15 +76,17 @@ jobs:
           platforms: arm64
 
       # A bare Ubuntu 22.04 container with only the runtime libraries a user installs (see the package README).
+      # The Go program is static, so it runs there without Go. The arm64 copy is built for the container's CPU.
       - name: Smoke test on a clean Ubuntu 22.04
         run: |
           set -euo pipefail
-          platform=${{ matrix.rid == 'linux-arm64' && 'linux/arm64' || 'linux/amd64' }}
-          docker run --rm --platform "$platform" -v "$PWD:/repo" -w /repo ubuntu:22.04 bash -euxo pipefail -c '
+          arch=${{ matrix.rid == 'linux-arm64' && 'arm64' || 'amd64' }}
+          CGO_ENABLED=0 GOOS=linux GOARCH="$arch" go build -trimpath -o "$RUNNER_TEMP/filee-build-smoke" ./cmd/filee-build
+          docker run --rm --platform "linux/$arch" -v "$PWD/dist:/dist:ro" -v "$RUNNER_TEMP/filee-build-smoke:/filee-build:ro" ubuntu:22.04 bash -euxo pipefail -c '
             apt-get update
             DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-              ca-certificates libc6 libgcc-s1 libicu70 libssl3 libstdc++6 tzdata zlib1g python3 fonts-noto-cjk
-            python3 scripts/smoke_test.py dist/filee-cli-*-${{ matrix.rid }}.tar.gz
+              ca-certificates libc6 libgcc-s1 libicu70 libssl3 libstdc++6 tzdata zlib1g fonts-noto-cjk
+            /filee-build smoke /dist/filee-cli-*-${{ matrix.rid }}.tar.gz
           '
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -103,26 +109,21 @@ jobs:
             runner: macos-15-intel
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
-    env:
-      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
-      DOTNET_NOLOGO: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          python-version: '3.12'
-      - name: Fetch pinned upstream source
-        run: python scripts/fetch_upstream.py
+          go-version-file: go.mod
+      - run: go build -trimpath -o filee-build ./cmd/filee-build
+      - run: ./filee-build fetch
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           global-json-file: .upstream/Filee/global.json
       # Ad-hoc signed like upstream's own macOS packages (no Apple Developer ID, no notarization).
-      - name: Build package
-        run: python scripts/build_package.py --rid ${{ matrix.rid }}
-      - name: Smoke test
-        run: python scripts/smoke_test.py dist/filee-cli-*-${{ matrix.rid }}.tar.gz
+      - run: ./filee-build package --rid ${{ matrix.rid }}
+      - run: ./filee-build smoke dist/filee-cli-*-${{ matrix.rid }}.tar.gz
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: package-${{ matrix.rid }}
@@ -135,27 +136,21 @@ jobs:
     name: win-x64
     runs-on: windows-2022
     timeout-minutes: 60
-    env:
-      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
-      DOTNET_NOLOGO: '1'
-      PYTHONUTF8: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          python-version: '3.12'
-      - name: Fetch pinned upstream source
-        run: python scripts/fetch_upstream.py
+          go-version-file: go.mod
+      - run: go build -trimpath -o filee-build.exe ./cmd/filee-build
+      - run: .\filee-build.exe fetch
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           global-json-file: .upstream/Filee/global.json
-      - name: Build package
-        run: python scripts/build_package.py --rid win-x64
-      - name: Smoke test
-        shell: pwsh
-        run: python scripts/smoke_test.py (Get-ChildItem dist/filee-cli-*-win-x64.zip).FullName
+      - run: .\filee-build.exe package --rid win-x64
+      - shell: pwsh
+        run: .\filee-build.exe smoke (Get-ChildItem dist/filee-cli-*-win-x64.zip).FullName
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: package-win-x64

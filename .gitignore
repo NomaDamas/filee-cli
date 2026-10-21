@@ -2,5 +2,5 @@
 .cache/
 dist/
 work/
-__pycache__/
-*.pyc
+/filee-build
+/filee-build.exe

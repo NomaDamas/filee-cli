@@ -90,14 +90,29 @@ download links are in the "Optional engines, not distributed here" section of `T
 ## How the packages are made
 
 ```
-UPSTREAM (tag + commit) ──► scripts/fetch_upstream.py ──► dotnet publish src/Filee.Cli (self-contained, per RID)
+UPSTREAM (tag + commit) ──► filee-build fetch ──► dotnet publish src/Filee.Cli (self-contained, per RID)
                                                           + rhwp + 7-Zip (pinned, SHA-256 checked)
                                                           + generated notices, UPSTREAM.md ──► archive ──► smoke test
 ```
 
-CI (`.github/workflows`) builds all five platforms on every push, runs `filee-cli version` and real conversions
-(PNG→WebP, MD→DOCX, MD→HWPX→PDF with Korean text, ZIP→7Z) on the unpacked archive, and checks glibc ≤ 2.35 for Linux.
-Pushing a tag `v<version>` publishes a release. Details: [docs/releasing.md](docs/releasing.md); keeping up with
-upstream: [docs/updating.md](docs/updating.md); trademark and licensing notes: [docs/legal.md](docs/legal.md).
+The build program is `cmd/filee-build`, a single static **Go** binary (standard library plus one small xz reader; no
+Python, no virtualenv, no npm). The only external tools are `git`, the **.NET SDK** (`dotnet publish` is what
+compiles Filee, so it is needed to *build*, never to *run* the packages: they are self-contained) and, on macOS,
+`codesign`. Rust (`rustup`) is needed only to compile rhwp for Linux.
 
-The scripts, patches and documents of this repository are MIT-licensed (see `LICENSE`).
+```sh
+go build -o filee-build ./cmd/filee-build
+./filee-build local                 # build + test all five packages from this computer (see docs/releasing.md)
+./filee-build local --rids osx-arm64
+./filee-build local --publish       # after all five pass: tag, push the tag, create the GitHub release
+```
+
+While the repository is private, GitHub Actions is not used: `local` builds macOS directly, Linux in Docker
+(`ubuntu:22.04`, then a second clean container for the smoke test) and Windows over SSH. The workflows in
+`.github/workflows` do the same on GitHub's runners and are switched on when that works (docs/releasing.md).
+Each package is smoke-tested after unpacking: `filee-cli version`, exit codes, PNG→WebP, MD→DOCX, MD→HWPX→PDF with
+Korean text, ZIP→7Z, and Linux files are checked for glibc ≤ 2.35. Details: [docs/releasing.md](docs/releasing.md);
+keeping up with upstream: [docs/updating.md](docs/updating.md); trademark and licensing notes:
+[docs/legal.md](docs/legal.md).
+
+The Go program, patches and documents of this repository are MIT-licensed (see `LICENSE`).

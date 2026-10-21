@@ -1,12 +1,15 @@
 name: Release
 
-# Publishes a GitHub release when a tag v<UPSTREAM version>-<revision> is pushed, e.g. v1.12.0-1 for UPSTREAM
-# tag=v1.12.0, revision=1. The tag must match the UPSTREAM file (prepare_release.py checks it) and must point at a
-# commit on main. All five packages are built and smoke-tested first; the release job only runs when all five pass.
+# Publishes a GitHub release from a tag v<UPSTREAM version>-<revision>, e.g. v1.12.0-1 for UPSTREAM tag=v1.12.0,
+# revision=1. Run it on the tag: `gh workflow run release.yml --ref v1.12.0-1`. The tag must match the UPSTREAM file
+# (`filee-build release` checks it) and point at a commit on main. All five packages are built and smoke-tested first;
+# the release job only runs when all five pass.
+#
+# Manual, not on tag push, because `filee-build local --publish` pushes the tag and creates the release from this
+# computer while the repository is private. Use this workflow once GitHub Actions can run for the repository.
 
 on:
-  push:
-    tags: ['v*']
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -36,8 +39,9 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Tag must be on main
+      - name: Must run on a tag, which must be on main
         run: |
+          [ "$GITHUB_REF_TYPE" = tag ] || { echo "::error::run this workflow on a tag (--ref vX.Y.Z-N)"; exit 1; }
           git fetch --no-tags origin main
           git merge-base --is-ancestor HEAD origin/main || { echo "::error::$TAG is not on main"; exit 1; }
 
@@ -47,14 +51,14 @@ jobs:
           path: assets
           merge-multiple: true
 
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          python-version: '3.12'
+          go-version-file: go.mod
 
       - name: SHA256SUMS and release notes
         run: |
           mkdir -p listings && mv assets/*.files.txt listings/
-          python scripts/prepare_release.py assets --tag "$TAG" --slug "$GITHUB_REPOSITORY"
+          go run ./cmd/filee-build release assets --tag "$TAG" --slug "$GITHUB_REPOSITORY"
           cat assets/SHA256SUMS
           (cd assets && sha256sum --check SHA256SUMS)
 

@@ -1,17 +1,13 @@
 name: CI
 
+# Manual only while the repository is private (Actions minutes are not available to it; see docs/releasing.md).
+# Switch `on:` to push/pull_request once CI can run.
+
 on:
-  push:
-    branches: [main]
-  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   build:
