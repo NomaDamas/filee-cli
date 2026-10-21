@@ -14,7 +14,6 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 	"sync"
 )
@@ -179,9 +178,9 @@ func readNuspec(name, version string) (nugetMeta, error) {
 }
 
 type nugetSources struct {
-	RepositoryOverride map[string]string `json:"repository_override"`
+	RepositoryOverride map[string]string                     `json:"repository_override"`
 	RefOverride        map[string]struct{ Ref, Note string } `json:"ref_override"`
-	LicenseOverride    map[string]string `json:"license_override"`
+	LicenseOverride    map[string]string                     `json:"license_override"`
 }
 
 type nugetComponent struct {
@@ -911,5 +910,3 @@ func crateTable(rows []crateRow) string {
 	}
 	return table([]string{"Crate", "Version", "License", "crates.io SHA-256 (= Cargo.lock)", "Note"}, cells)
 }
-
-var _ = sort.Strings
