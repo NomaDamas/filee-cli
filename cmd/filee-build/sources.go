@@ -329,7 +329,22 @@ func prepareGit(engine string, s engineSource) (string, error) {
 			{"fetch", "--depth", "1", "origin", s.Ref},
 			{"checkout", "-q", "-f", "--detach", "FETCH_HEAD"},
 		} {
-			if _, err := run(runOpts{Dir: dir}, "git", gitArgs...); err != nil {
+			// Only the network step is retried: servers of other projects answer 5xx now and then, and a run that
+			// fetches about 120 sources must not fail for that. A wrong commit fails the same way every time.
+			attempts := 1
+			if gitArgs[0] == "fetch" {
+				attempts = 4
+			}
+			var err error
+			for try := 1; try <= attempts; try++ {
+				if _, err = run(runOpts{Dir: dir}, "git", gitArgs...); err == nil {
+					break
+				}
+				if try < attempts {
+					time.Sleep(time.Duration(try*try) * 5 * time.Second)
+				}
+			}
+			if err != nil {
 				fetchErr = fmt.Errorf("git %s in %s: %w", strings.Join(gitArgs, " "), dir, err)
 				break
 			}
