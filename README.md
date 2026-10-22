@@ -17,9 +17,27 @@ or installer), and are built from a pinned upstream tag by the scripts here.
 - The name "Filee" belongs to its author. The executable stays `filee-cli` so programs that look for it keep working;
   nothing here claims to be the official release.
 
+## Install
+
+| Platform | Command |
+|---|---|
+| macOS (Apple silicon, Intel), Linux (x64, arm64) | `brew install NomaDamas/filee-cli/filee-cli` ([tap](https://github.com/NomaDamas/homebrew-filee-cli)) |
+| Windows x64 | `scoop bucket add filee-cli https://github.com/NomaDamas/scoop-filee-cli` then `scoop install filee-cli` ([bucket](https://github.com/NomaDamas/scoop-filee-cli)) |
+| anywhere | the archive from the [latest release](https://github.com/NomaDamas/filee-cli/releases/latest), see below |
+
+```sh
+filee-cli formats                          # 255 formats, 368 extensions
+filee-cli convert photo.heic --to jpg
+filee-cli convert *.png --to webp -q 80 -o out
+```
+
+The download is about 0.6 to 1 GB because the conversion engines are in it (the largest are calibre and LibreOffice).
+Both package managers check its SHA-256. Homebrew keeps the archive in the Cellar and unpacks it after its own
+install steps, so the vendors' signed engines stay byte-identical.
+
 ## Download and verify
 
-Releases have five archives and one `SHA256SUMS`:
+Releases have five archives, six source archives (the Corresponding Source of the bundled engines) and one `SHA256SUMS`:
 
 | Platform | Asset |
 |---|---|
@@ -45,7 +63,7 @@ shasum -a 256 --check --ignore-missing SHA256SUMS   # macOS
 Select-String 'win-x64' .\SHA256SUMS
 ```
 
-Once the repository is public, releases also carry a signed build-provenance attestation:
+Releases built by `release.yml` also carry a signed build-provenance attestation:
 `gh attestation verify <asset> --repo NomaDamas/filee-cli`.
 
 macOS packages are ad-hoc signed like upstream's, **not notarized**. Browsers add a quarantine flag to downloads;
