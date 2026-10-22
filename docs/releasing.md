@@ -41,15 +41,41 @@ code that built the assets. It writes `SHA256SUMS` and `RELEASE_NOTES.md` (`file
 of the five archives is missing, an extra file is present, or the tag is not `v<upstream version>-<revision>`),
 creates the tag, pushes it, creates a **draft** release with the five archives and `SHA256SUMS`, then publishes it.
 
-## GitHub Actions (for when they can run)
+## GitHub Actions
 
 | Workflow | Trigger | Does |
 |---|---|---|
-| `ci.yml` → `build.yml` | manual (`gh workflow run ci.yml`) | builds the five packages with `filee-build`, smoke-tests each (Linux inside a clean `ubuntu:22.04` container), checks glibc, uploads artifacts |
-| `release.yml` | manual on a tag (`gh workflow run release.yml --ref v1.12.0-1`) | the same build, then, only if all five pass: `SHA256SUMS`, release notes, provenance attestation (public repositories), GitHub release |
+| `ci.yml` → `build.yml` | pull requests, or by hand (`gh workflow run ci.yml`) | builds the five packages with `filee-build` and the Corresponding Source archives, smoke-tests each package (Linux inside a clean `ubuntu:22.04` container), checks glibc, uploads artifacts |
+| `release.yml` | by hand on a tag (`gh workflow run release.yml --ref v2.0.0-1`) | the same build, then, only if every job passes: `SHA256SUMS`, release notes, provenance attestation, GitHub release with the five packages and the source archives |
 
-Actions are pinned to commit SHAs (comments name the version). To switch CI on, change `on:` in `ci.yml` to
-`push`/`pull_request`.
+A build takes about 15 to 20 minutes and downloads about 9 GB of engine sources; the `engine sources` job frees disk
+space first because a stock runner has little. Actions are pinned to commit SHAs (comments name the version).
+
+To release: update `UPSTREAM` (docs/updating.md), push to `main`, create the annotated tag `v<version>-<revision>` on that
+commit, push the tag, run `release.yml` on it. A tag that never got a release can be moved; a published one must not be.
+
+## Homebrew tap and Scoop bucket
+
+Two small repositories carry the install manifests; neither holds a binary and neither needs a token from this one.
+
+| | Repository | File | Updates itself with |
+|---|---|---|---|
+| Homebrew (macOS, Linux) | [`NomaDamas/homebrew-filee-cli`](https://github.com/NomaDamas/homebrew-filee-cli) | `Formula/filee-cli.rb` | `update.yml` every 6 hours: reads `SHA256SUMS` of the latest release and rewrites the four URLs and hashes |
+| Scoop (Windows) | [`NomaDamas/scoop-filee-cli`](https://github.com/NomaDamas/scoop-filee-cli) | `bucket/filee-cli.json` | `update.yml` every 6 hours: Scoop's own `checkver` and `autoupdate` (version, URL, hash from `SHA256SUMS`) |
+
+Each has a `test.yml` that installs the package on GitHub's runners (macOS arm64 and Intel, Ubuntu, Windows), audits it and
+converts a file. Run it after a release with `gh workflow run test.yml --repo NomaDamas/<repository>`.
+
+Why the formula looks unusual: the packages contain the vendors' signed programs (LibreOffice.app, calibre.app, FFmpeg),
+and Homebrew rewrites the install names of every Mach-O file in a keg, which fails on some of them and invalidates the
+signatures of the others. The keg therefore holds the downloaded archive (`url ..., using: :nounzip`, SHA-256 checked by
+Homebrew) and `post_install_steps` unpacks it afterwards. `bin/filee-cli` is a small shell script that starts the program
+in `libexec`, which is where `engines/` sits. The tap's `audit_exceptions/flat_namespace_allowlist.json` is for the
+vendor LibreOffice. The formula's test sets `FILEE_DATA_DIR` because Homebrew's test sandbox denies writing to
+`~/Library/Application Support`.
+
+Not published: winget (a pull request to Microsoft's repository per release) and homebrew-core (size and licences do not
+fit). Scoop covers Windows without either.
 
 ### Credentials: GitHub's OIDC token, no stored secrets
 
@@ -66,7 +92,7 @@ or its secrets.
   an Apple certificate in GitHub secrets (never in the repository): pass the identity with
   `filee-build package --codesign-identity` and add `xcrun notarytool`. Not done.
 - **Consuming a release**: download the assets by tag, compare the SHA-256 with `SHA256SUMS` and, for releases built by
-  `release.yml`, run `gh attestation verify`. The Homebrew tap and Scoop bucket (below) do the first part by themselves.
+  `release.yml`, run `gh attestation verify`. The Homebrew tap and Scoop bucket check the SHA-256 by themselves.
 
 ### Runners
 
