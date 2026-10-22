@@ -85,7 +85,7 @@ func bundledEngineNotices(rid string, up Upstream, repoSlug string, bundled []Bu
 	}
 	sort.Slice(rows, func(i, j int) bool { return rows[i][0] < rows[j][0] })
 	fmt.Fprintf(&b, "## Bundled third-party engines (%s)\n\n", rid)
-	b.WriteString("These conversion engines are included **unmodified** (the vendor's own binaries, the files upstream Filee pins, checked against the SHA-256 in the table; the one exception, FFmpeg on Windows, says so). They run as separate programs started by `filee-cli`; `filee-cli` links none of their code. Each keeps its own license, and each is optional for Filee: removing its folder under `engines/` disables only the conversions it provided.\n\n")
+	b.WriteString("These conversion engines are included **unmodified** (the vendor's own binaries, checked against the SHA-256 in the table). They are the files upstream Filee pins for this platform, except where the table says **not the file upstream Filee pins** (FFmpeg on Windows, and FFmpeg and Ghostscript on macOS, where Filee has no download and looks for a copy on the `PATH`). They run as separate programs started by `filee-cli`; `filee-cli` links none of their code. Each keeps its own license, and each is optional for Filee: removing its folder under `engines/` disables only the conversions it provided.\n\n")
 	b.WriteString(table([]string{"Engine", "Version", "License", "Location", "Binary (download, SHA-256)", "Source code"}, rows))
 	b.WriteString("\n")
 	if len(hostedRows) > 0 {

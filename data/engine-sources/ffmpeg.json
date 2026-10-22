@@ -1,8 +1,8 @@
 {
   "engine": "ffmpeg",
-  "name": "FFmpeg (BtbN GPL builds)",
+  "name": "FFmpeg (BtbN GPL builds; Martin Riedl builds on macOS)",
   "license": "GPL-3.0-or-later",
-  "license_note": "Built with the BtbN 'gpl' variant: --enable-gpl --enable-version3 (confirmed by the shipped binaries' configuration string and by variants/defaults-gpl.sh LICENSE_FILE=COPYING.GPLv3), so the whole program is GPL-3.0-or-later.",
+  "license_note": "Built with the BtbN 'gpl' variant: --enable-gpl --enable-version3 (confirmed by the shipped binaries' configuration string and by variants/defaults-gpl.sh LICENSE_FILE=COPYING.GPLv3), so the whole program is GPL-3.0-or-later. macOS: Martin Riedl's build is configured with --enable-gpl --enable-version3 (configuration string of both binaries, versions.txt on the download page), so it is GPL-3.0-or-later as well; it also links OpenSSL (Apache-2.0, compatible with GPLv3).",
   "binaries": {
     "linux-x64": {
       "version": "n9.0.2-17-g2a571b6068",
@@ -40,6 +40,38 @@
         "ffplay.exe"
       ],
       "note": "Replaces the previous Gyan.dev ffmpeg-9.0.2-full_build-shared.zip entry in engines.json with the BtbN GPL build from the same release tag."
+    },
+    "osx-arm64": {
+      "version": "9.0.2",
+      "url": "https://ffmpeg.martin-riedl.de/download/macos/arm64/1789931890_9.0.2/ffmpeg.zip",
+      "sha256": "c8ed4c4e6978a03c485edbfe4e0a5dc2380f8a30bba5150531b31b094492d924",
+      "size": 28395699,
+      "archive_member": "ffmpeg",
+      "note": "Martin Riedl (https://ffmpeg.martin-riedl.de) release build 9.0.2 for macOS Apple silicon, built 2026-09-20, signed by its author (Developer ID Application: Martin Riedl, KU3N25YGLU); the signature is kept. ffprobe.zip of the same build (sha256 fcbe839537485eaee7a7a8bc5cbc0f90d53617e80943e8a5b2e31cb851197ea6, 28317701 bytes) is bundled next to it. Not a build Filee itself offers on macOS: Filee 2.0.0 has no FFmpeg download for macOS and uses one found on the PATH.",
+      "companion": {
+        "ffprobe": {
+          "url": "https://ffmpeg.martin-riedl.de/download/macos/arm64/1789931890_9.0.2/ffprobe.zip",
+          "sha256": "fcbe839537485eaee7a7a8bc5cbc0f90d53617e80943e8a5b2e31cb851197ea6",
+          "size": 28317701
+        }
+      },
+      "kind": "zip-program"
+    },
+    "osx-x64": {
+      "version": "9.0.2",
+      "url": "https://ffmpeg.martin-riedl.de/download/macos/amd64/1789931006_9.0.2/ffmpeg.zip",
+      "sha256": "7c6b4125b191cbf773832dc51f424cf2b6bb7da43007d1e066f95909e47cacd4",
+      "size": 33816391,
+      "archive_member": "ffmpeg",
+      "note": "Martin Riedl release build 9.0.2 for macOS Intel (x86_64), built 2026-09-20, signed by its author; ffprobe.zip of the same build (sha256 2322438ed2f6319a691291b247d09c69dcaa3a982460d1f269a7e1af335cfdfd, 33719233 bytes) is bundled next to it.",
+      "companion": {
+        "ffprobe": {
+          "url": "https://ffmpeg.martin-riedl.de/download/macos/amd64/1789931006_9.0.2/ffprobe.zip",
+          "sha256": "2322438ed2f6319a691291b247d09c69dcaa3a982460d1f269a7e1af335cfdfd",
+          "size": 33719233
+        }
+      },
+      "kind": "zip-program"
     }
   },
   "binaries_note": "sha256/size computed locally by downloading each archive (win64 zip 194034585 bytes hashed a0e45723..., matching the GitHub release asset digest sha256:a0e45723c72141975f51d8666302e614711745f3102b704ca3f82c897a58d278).",
@@ -306,7 +338,7 @@
     }
   },
   "host_source": true,
-  "build_recipe": "https://github.com/BtbN/FFmpeg-Builds at commit 6c9aec5fc9a72ec3abedd1fa84db141fa18cf52b (the release tag autobuild-2026-09-30-13-08 points at this commit; the 'Build FFmpeg' workflow run 36713993443 that produced this release had head_sha 6c9aec5fc9a72ec3abedd1fa84db141fa18cf52b). Recipe: build.sh + generate.sh + variants/{linux64,linuxarm64,win64}-gpl.sh + variants/defaults-gpl.sh + variants/{linux,windows}-install-static.sh + scripts.d/**/*.sh + addins/9.0.sh (GIT_BRANCH=release/9.0) + patches/ + images/ (base containers).",
+  "build_recipe": "https://github.com/BtbN/FFmpeg-Builds at commit 6c9aec5fc9a72ec3abedd1fa84db141fa18cf52b (the release tag autobuild-2026-09-30-13-08 points at this commit; the 'Build FFmpeg' workflow run 36713993443 that produced this release had head_sha 6c9aec5fc9a72ec3abedd1fa84db141fa18cf52b). Recipe: build.sh + generate.sh + variants/{linux64,linuxarm64,win64}-gpl.sh + variants/defaults-gpl.sh + variants/{linux,windows}-install-static.sh + scripts.d/**/*.sh + addins/9.0.sh (GIT_BRANCH=release/9.0) + patches/ + images/ (base containers).\n\nmacOS (osx-x64, osx-arm64): Martin Riedl's FFmpeg build scripts, https://git.martin-riedl.de/ffmpeg/build-script at commit 6a611e19870e197bc37c6e4c7fccddebd3715466 (2026-09-20 \"chore: ffmpeg (version 9.0.2)\", the commit that sets version/ffmpeg to 9.0.2; the component versions of that commit equal the versions.txt published for both shipped binaries, 26 of 26 compared). `./build.sh` fetches each component's release tarball named in script/build-<component>.sh (pinned below with their SHA-256), builds them static and then FFmpeg with the configure flags in the shipped binaries' configuration string (--enable-gray --enable-libxml2 --enable-version3 --enable-gpl --enable-openssl --enable-libfreetype --enable-fontconfig --enable-libharfbuzz --enable-libbluray --enable-libsnappy --enable-libsrt --enable-libvmaf --enable-libass --enable-libklvanc --enable-libzimg --enable-libzvbi --enable-libaom --enable-libdav1d --enable-libopenh264 --enable-libopenjpeg --enable-librav1e --enable-libsvtav1 --enable-libvpx --enable-libvvenc --enable-libwebp --enable-libx264 --enable-libx265 --enable-libmp3lame --enable-libopus --enable-libvorbis --enable-libtheora).",
   "sources": [
     {
       "name": "AMF",
@@ -1982,9 +2014,11 @@
       "platforms": [
         "linux-x64",
         "linux-arm64",
-        "win-x64"
+        "win-x64",
+        "osx-x64",
+        "osx-arm64"
       ],
-      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = GPLv2; common/base.h grants 'either version 2 of the License, or (at your option) any later version'."
+      "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING = GPLv2; common/base.h grants 'either version 2 of the License, or (at your option) any later version'. macOS: script/build-x264.sh downloads x264-master.tar.gz (a moving branch), so the exact commit used on 2026-09-20 is not recorded by the build. The shipped binaries report \"x264 - core 165\"; commit 0480cb05 (2025-09-10) is the newest master commit before the build date and the one the Linux/Windows pin above uses, which reports core 165 as well (x264 master had no later commit through 2026-10-22, checked with git log). Treat as the best available pin."
     },
     {
       "name": "x265",
@@ -2145,10 +2179,475 @@
         "win-x64"
       ],
       "note": "all shipped platforms (linux-x64, linux-arm64, win-x64). COPYING.md states per-file 'License: GPL-2+' for libzvbi."
+    },
+    {
+      "name": "martin-riedl-ffmpeg-build-script",
+      "version": "6a611e1",
+      "license": "Apache-2.0",
+      "kind": "git",
+      "url": "https://git.martin-riedl.de/ffmpeg/build-script",
+      "ref": "6a611e19870e197bc37c6e4c7fccddebd3715466",
+      "submodules": false,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS build recipe (build.sh, script/*.sh, version/*). Apache-2.0 per its LICENSE file. Mirror: none known; the repository serves any commit by hash."
+    },
+    {
+      "name": "ffmpeg-release-tarball",
+      "version": "9.0.2",
+      "license": "GPL-3.0-or-later",
+      "kind": "http",
+      "url": "https://ffmpeg.org/releases/ffmpeg-9.0.2.tar.bz2",
+      "sha256": "ee80a25a5621df84498cef46917be87eab3b4f01951e85c2c7cbe5c94914ee70",
+      "size": 14464861,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-ffmpeg.sh of the pinned build-script commit."
+    },
+    {
+      "name": "aom",
+      "version": "3.15.0",
+      "license": "BSD-2-Clause",
+      "kind": "http",
+      "url": "https://storage.googleapis.com/aom-releases/libaom-3.15.0.tar.gz",
+      "sha256": "ea08c38ecc078bc85bb1b691020e52b06250f1a81fe7ca5b624629225081af96",
+      "size": 6622801,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-aom.sh of the pinned build-script commit."
+    },
+    {
+      "name": "dav1d",
+      "version": "1.5.4",
+      "license": "BSD-2-Clause",
+      "kind": "http",
+      "url": "https://code.videolan.org/videolan/dav1d/-/archive/1.5.4/dav1d-1.5.4.tar.gz",
+      "sha256": "a1d5b63d2d38ec9bd03acf643caa51fa22edd1e89c5a109c4807717216bbec07",
+      "size": 1748189,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-dav1d.sh of the pinned build-script commit."
+    },
+    {
+      "name": "fontconfig",
+      "version": "2.17.1",
+      "license": "MIT",
+      "kind": "http",
+      "url": "https://gitlab.freedesktop.org/api/v4/projects/890/packages/generic/fontconfig/2.17.1/fontconfig-2.17.1.tar.xz",
+      "sha256": "9f5cae93f4fffc1fbc05ae99cdfc708cd60dfd6612ffc0512827025c026fa541",
+      "size": 1326312,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-fontconfig.sh of the pinned build-script commit."
+    },
+    {
+      "name": "freetype",
+      "version": "2.13.0",
+      "license": "FTL OR GPL-2.0-or-later",
+      "kind": "http",
+      "url": "https://download.savannah.gnu.org/releases/freetype/freetype-2.13.0.tar.gz",
+      "sha256": "a7aca0e532a276ea8d85bd31149f0a74c33d19c8d287116ef8f5f8357b4f1f80",
+      "size": 3819054,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-freetype.sh of the pinned build-script commit."
+    },
+    {
+      "name": "fribidi",
+      "version": "1.0.16",
+      "license": "LGPL-2.1-or-later",
+      "kind": "http",
+      "url": "https://github.com/fribidi/fribidi/releases/download/v1.0.16/fribidi-1.0.16.tar.xz",
+      "sha256": "1b1cde5b235d40479e91be2f0e88a309e3214c8ab470ec8a2744d82a5a9ea05c",
+      "size": 1098260,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-fribidi.sh of the pinned build-script commit."
+    },
+    {
+      "name": "harfbuzz",
+      "version": "14.4.0",
+      "license": "MIT",
+      "kind": "http",
+      "url": "https://github.com/harfbuzz/harfbuzz/releases/download/14.4.0/harfbuzz-14.4.0.tar.xz",
+      "sha256": "2357ed966c6ced7bfa720b0640c0231065af01158fbea215093ffa15aed44371",
+      "size": 20107692,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-harfbuzz.sh of the pinned build-script commit."
+    },
+    {
+      "name": "lame",
+      "version": "4.0",
+      "license": "LGPL-2.0-or-later",
+      "kind": "http",
+      "url": "https://unlimited.dl.sourceforge.net/project/lame/lame/4.0/lame-4.0.tar.gz",
+      "sha256": "3df5124d5ad3a98312ffd7ba6a9b36230e4f8a3e66d3ce0f425e336c32d216eb",
+      "size": 1496810,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-lame.sh of the pinned build-script commit."
+    },
+    {
+      "name": "libass",
+      "version": "0.17.5",
+      "license": "ISC",
+      "kind": "http",
+      "url": "https://github.com/libass/libass/releases/download/0.17.5/libass-0.17.5.tar.gz",
+      "sha256": "caab4b993dd7be6187c55623b789ed75dddefea6e65938af134637c732fe094a",
+      "size": 647066,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-libass.sh of the pinned build-script commit."
+    },
+    {
+      "name": "libbluray",
+      "version": "1.5.0",
+      "license": "LGPL-2.1-or-later",
+      "kind": "http",
+      "url": "https://download.videolan.org/pub/videolan/libbluray/1.5.0/libbluray-1.5.0.tar.xz",
+      "sha256": "f676408e91a5d321abf8b8d4dfdae36205c297dab5c54c3ec519639025f474a2",
+      "size": 473072,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-libbluray.sh of the pinned build-script commit."
+    },
+    {
+      "name": "libklvanc",
+      "version": "1.6.0",
+      "license": "LGPL-2.1-or-later",
+      "kind": "http",
+      "url": "https://github.com/stoth68000/libklvanc/archive/refs/tags/vid.obe.1.6.0.tar.gz",
+      "sha256": "5076ca48455a4ef4ead2cd880ba189b21937a9ad8fd458adfc133d7bb1c948c3",
+      "size": 53167296,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-libklvanc.sh of the pinned build-script commit. Source files carry \"GNU Lesser General Public License, version 2.1 or (at your option) any later version\"; lgpl-2.1.txt ships in the tarball."
+    },
+    {
+      "name": "libogg",
+      "version": "1.3.6",
+      "license": "BSD-3-Clause",
+      "kind": "http",
+      "url": "https://ftp.osuosl.org/pub/xiph/releases/ogg/libogg-1.3.6.tar.gz",
+      "sha256": "83e6704730683d004d20e21b8f7f55dcb3383cdf84c0daedf30bde175f774638",
+      "size": 604469,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-libogg.sh of the pinned build-script commit. libogg is needed by libvorbis and libtheora."
+    },
+    {
+      "name": "libtheora",
+      "version": "1.2.0",
+      "license": "BSD-3-Clause",
+      "kind": "http",
+      "url": "http://downloads.xiph.org/releases/theora/libtheora-1.2.0.tar.gz",
+      "sha256": "279327339903b544c28a92aeada7d0dcfd0397b59c2f368cc698ac56f515906e",
+      "size": 2535283,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-libtheora.sh of the pinned build-script commit."
+    },
+    {
+      "name": "libvmaf",
+      "version": "3.2.0",
+      "license": "BSD-2-Clause-Patent",
+      "kind": "http",
+      "url": "https://github.com/Netflix/vmaf/archive/refs/tags/v3.2.0.tar.gz",
+      "sha256": "a28f93f3b4fa65601be324587072e32a6a704a304ba7b1aec9b70b3f709bc1dc",
+      "size": 18583070,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-libvmaf.sh of the pinned build-script commit."
+    },
+    {
+      "name": "libvorbis",
+      "version": "1.3.7",
+      "license": "BSD-3-Clause",
+      "kind": "http",
+      "url": "https://ftp.osuosl.org/pub/xiph/releases/vorbis/libvorbis-1.3.7.tar.gz",
+      "sha256": "0e982409a9c3fc82ee06e08205b1355e5c6aa4c36bca58146ef399621b0ce5ab",
+      "size": 1658963,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-libvorbis.sh of the pinned build-script commit."
+    },
+    {
+      "name": "libwebp",
+      "version": "1.6.0",
+      "license": "BSD-3-Clause",
+      "kind": "http",
+      "url": "https://github.com/webmproject/libwebp/archive/refs/tags/v1.6.0.tar.gz",
+      "sha256": "93a852c2b3efafee3723efd4636de855b46f9fe1efddd607e1f42f60fc8f2136",
+      "size": 3833512,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-libwebp.sh of the pinned build-script commit."
+    },
+    {
+      "name": "libxml2",
+      "version": "2.15.3",
+      "license": "MIT",
+      "kind": "http",
+      "url": "https://download.gnome.org/sources/libxml2/2.15/libxml2-2.15.3.tar.xz",
+      "sha256": "78262a6e7ac170d6528ebfe2efccdf220191a5af6a6cd61ea4a9a9a5042c7a07",
+      "size": 3152452,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-libxml2.sh of the pinned build-script commit."
+    },
+    {
+      "name": "openh264",
+      "version": "2.6.0",
+      "license": "BSD-2-Clause",
+      "kind": "http",
+      "url": "https://github.com/cisco/openh264/archive/v2.6.0.tar.gz",
+      "sha256": "558544ad358283a7ab2930d69a9ceddf913f4a51ee9bf1bfb9e377322af81a69",
+      "size": 60302243,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-openh264.sh of the pinned build-script commit."
+    },
+    {
+      "name": "openjpeg",
+      "version": "2.5.4",
+      "license": "BSD-2-Clause",
+      "kind": "http",
+      "url": "https://github.com/uclouvain/openjpeg/archive/refs/tags/v2.5.4.tar.gz",
+      "sha256": "a695fbe19c0165f295a8531b1e4e855cd94d0875d2f88ec4b61080677e27188a",
+      "size": 2157028,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-openjpeg.sh of the pinned build-script commit."
+    },
+    {
+      "name": "openssl",
+      "version": "3.6.4",
+      "license": "Apache-2.0",
+      "kind": "http",
+      "url": "https://github.com/openssl/openssl/releases/download/openssl-3.6.4/openssl-3.6.4.tar.gz",
+      "sha256": "9bffaa1ad1e07b354c21bd3324ec02fa15579f45a7d0494b3e74bc449b7333ef",
+      "size": 55003802,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-openssl.sh of the pinned build-script commit."
+    },
+    {
+      "name": "opus",
+      "version": "1.6.1",
+      "license": "BSD-3-Clause",
+      "kind": "http",
+      "url": "https://downloads.xiph.org/releases/opus/opus-1.6.1.tar.gz",
+      "sha256": "6ffcb593207be92584df15b32466ed64bbec99109f007c82205f0194572411a1",
+      "size": 10472813,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-opus.sh of the pinned build-script commit."
+    },
+    {
+      "name": "rav1e",
+      "version": "0.8.1",
+      "license": "BSD-2-Clause",
+      "kind": "http",
+      "url": "https://github.com/xiph/rav1e/archive/refs/tags/v0.8.1.tar.gz",
+      "sha256": "06d1523955fb6ed9cf9992eace772121067cca7e8926988a1ee16492febbe01e",
+      "size": 3040879,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-rav1e.sh of the pinned build-script commit. Built with cargo (cargo cinstall); the Rust crates it downloads at build time are pinned by the tarball's own Cargo.lock."
+    },
+    {
+      "name": "SDL2",
+      "version": "2.32.10",
+      "license": "Zlib",
+      "kind": "http",
+      "url": "https://www.libsdl.org/release/SDL2-2.32.10.tar.gz",
+      "sha256": "5f5993c530f084535c65a6879e9b26ad441169b3e25d789d83287040a9ca5165",
+      "size": 7630262,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-sdl.sh of the pinned build-script commit. Built as a dependency of the FFmpeg build (ffplay is not shipped)."
+    },
+    {
+      "name": "snappy",
+      "version": "1.2.2",
+      "license": "BSD-3-Clause",
+      "kind": "http",
+      "url": "https://github.com/google/snappy/archive/refs/tags/1.2.2.tar.gz",
+      "sha256": "90f74bc1fbf78a6c56b3c4a082a05103b3a56bb17bca1a27e052ea11723292dc",
+      "size": 1108618,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-snappy.sh of the pinned build-script commit."
+    },
+    {
+      "name": "srt",
+      "version": "1.5.7",
+      "license": "MPL-2.0",
+      "kind": "http",
+      "url": "https://github.com/Haivision/srt/archive/refs/tags/v1.5.7.tar.gz",
+      "sha256": "017cd1e437ef2073a4dd10ddf7b55e86bc3d6ebac0393d13bd22f6a57055d32b",
+      "size": 1794204,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-srt.sh of the pinned build-script commit."
+    },
+    {
+      "name": "SVT-AV1",
+      "version": "4.2.0",
+      "license": "BSD-3-Clause-Clear",
+      "kind": "http",
+      "url": "https://gitlab.com/AOMediaCodec/SVT-AV1/-/archive/v4.2.0/SVT-AV1-v4.2.0.tar.gz",
+      "sha256": "c7b13c4a84bd3751aa35fcc72be13e6875467e7c2216879251a486e5b1e4e740",
+      "size": 11070537,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-svt-av1.sh of the pinned build-script commit."
+    },
+    {
+      "name": "libvpx",
+      "version": "1.16.0",
+      "license": "BSD-3-Clause",
+      "kind": "http",
+      "url": "https://github.com/webmproject/libvpx/archive/v1.16.0.tar.gz",
+      "sha256": "7a479a3c66b9f5d5542a4c6a1b7d3768a983b1e5c14c60a9396edc9b649e015c",
+      "size": 5635379,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-vpx.sh of the pinned build-script commit."
+    },
+    {
+      "name": "vvenc",
+      "version": "1.14.0",
+      "license": "BSD-3-Clause-Clear",
+      "kind": "http",
+      "url": "https://github.com/fraunhoferhhi/vvenc/archive/refs/tags/v1.14.0.tar.gz",
+      "sha256": "dd43d061d59dbc0d9b9ae5b99cb40672877dd811646228938f065798939ee174",
+      "size": 2352859,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-vvenc.sh of the pinned build-script commit."
+    },
+    {
+      "name": "x265",
+      "version": "4.2",
+      "license": "GPL-2.0-or-later",
+      "kind": "http",
+      "url": "https://bitbucket.org/multicoreware/x265_git/get/4.2.tar.gz",
+      "sha256": "0a3d41f6b4e2fe5a49d783d6631bd1a49c44cdf999074a3ff09e2cb71ac8ed33",
+      "size": 1836260,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-x265.sh of the pinned build-script commit. The shipped binaries report \"x265 4.0+1-6318f22\": the 4.2 tarball's x265Version.txt says repositorychangeset 6318f22, releasetag 4.0, releasetagdistance 1, i.e. the same revision (hash of the tarball computed here; bitbucket serves it as multicoreware-x265_git-e444744c0397.tar.gz)."
+    },
+    {
+      "name": "zimg",
+      "version": "3.0.6",
+      "license": "WTFPL",
+      "kind": "http",
+      "url": "https://github.com/sekrit-twc/zimg/archive/refs/tags/release-3.0.6.tar.gz",
+      "sha256": "be89390f13a5c9b2388ce0f44a5e89364a20c1c57ce46d382b1fcc3967057577",
+      "size": 326725,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-zimg.sh of the pinned build-script commit."
+    },
+    {
+      "name": "zlib",
+      "version": "1.3.2",
+      "license": "Zlib",
+      "kind": "http",
+      "url": "https://www.zlib.net/fossils/zlib-1.3.2.tar.gz",
+      "sha256": "bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16",
+      "size": 1502830,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-zlib.sh of the pinned build-script commit."
+    },
+    {
+      "name": "zvbi",
+      "version": "0.2.35",
+      "license": "GPL-2.0-or-later",
+      "kind": "http",
+      "url": "https://sourceforge.net/projects/zapping/files/zvbi/0.2.35/zvbi-0.2.35.tar.bz2/download",
+      "sha256": "fc883c34111a487c4a783f91b1b2bb5610d8d8e58dcba80c7ab31e67e4765318",
+      "size": 1047761,
+      "platforms": [
+        "osx-x64",
+        "osx-arm64"
+      ],
+      "note": "macOS only. Release tarball named by script/build-zvbi.sh of the pinned build-script commit."
     }
   ],
   "unresolved": [
     "https://git.savannah.gnu.org/git/gnulib.git eb72eb6f75f5621c5d648acd11467fd124584617: git smart-HTTP endpoint git.savannah.gnu.org:443 was unreachable from the research host, but the same commit is present and fetchable in the build script's own mirror list (SCRIPT_MIRROR2=https://github.com/coreutils/gnulib.git, verified via GitHub API).",
-    "https://git.savannah.gnu.org/git/libiconv.git 1df3087ba8110c7f3ed3eb5f8869b814dbbe00b0: git smart-HTTP endpoint git.savannah.gnu.org:443 was unreachable from the research host, so 'git fetch --depth 1 <url> <sha>' could not be exercised here; commit existence was confirmed earlier by fetching a file from the project's cgit at that exact revision (cgit plain/?h=<sha> resolved and returned the file), and the ref is the value BtbN's scripts.d pins."
+    "https://git.savannah.gnu.org/git/libiconv.git 1df3087ba8110c7f3ed3eb5f8869b814dbbe00b0: git smart-HTTP endpoint git.savannah.gnu.org:443 was unreachable from the research host, so 'git fetch --depth 1 <url> <sha>' could not be exercised here; commit existence was confirmed earlier by fetching a file from the project's cgit at that exact revision (cgit plain/?h=<sha> resolved and returned the file), and the ref is the value BtbN's scripts.d pins.",
+    "macOS x264: script/build-x264.sh fetches \"master\" (no tag, no commit recorded in the binary). Pinned to commit 0480cb05fa188d37ae87e8f4fd8f1aea3711f7ee, the newest commit of x264 master at the build date and at the date of this pin; \"x264 - core 165\" in the shipped binaries matches it, but the build itself does not prove it.",
+    "macOS toolchain: the build uses Apple clang 14.0.0 from Xcode and the tools its scripts download or expect (nasm 3.02, cmake, ninja 1.13.2, pkg-config 0.29.2, meson, a Rust toolchain for rav1e). Those are build tools, not part of the shipped binaries, and are not mirrored here.",
+    "macOS: Martin Riedl's build-script repository (git.martin-riedl.de) is a single-maintainer server; the pinned commit is mirrored here in the source archive."
   ]
 }

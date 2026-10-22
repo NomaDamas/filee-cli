@@ -12,10 +12,10 @@ Everything is done by `filee-build` (Go, `cmd/filee-build`). Requirements on the
 | ssh + scp to a Windows machine with git and the .NET SDK | `win-x64` (the 7-Zip MSI is unpacked with `msiexec`) |
 | gh (logged in) | `--publish` |
 
-## While the repository is private: build locally
+## Building locally (without GitHub Actions)
 
-GitHub-hosted runners are not available to this private repository (the organization's Actions billing blocks every job),
-so the workflows are manual-only and `filee-build local` replaces them:
+The GitHub workflows below build the same packages on GitHub's runners (free for a public repository). To build on your
+own computers instead, `filee-build local` does the same:
 
 ```sh
 go build -o filee-build ./cmd/filee-build
@@ -59,17 +59,16 @@ attestation is created. There is **no** personal access token, signing key, clou
 or its secrets.
 
 - **Attestation**: `actions/attest` signs a SLSA provenance statement for `SHA256SUMS` (hence every asset). GitHub supports it for **public** repositories
-  (private ones need Enterprise Cloud), so the step is skipped while the repository is private
-  (`github.event.repository.private`) and runs by itself once it is public. Verify with
+  (private ones need Enterprise Cloud); the step runs only while the repository is public
+  (`github.event.repository.private == false`). Verify with
   `gh attestation verify <asset> --repo NomaDamas/filee-cli`. Local releases carry no attestation.
 - **macOS signing**: ad-hoc (`codesign -s -`) like upstream's packages. Developer ID signing and notarization would need
   an Apple certificate in GitHub secrets (never in the repository): pass the identity with
   `filee-build package --codesign-identity` and add `xcrun notarytool`. Not done.
-- **Dazzi consumption**: `stage-tools.mjs` should download assets by tag, compare the SHA-256 from `SHA256SUMS`, and
-  once public may run `gh attestation verify`. A private repository needs a token that can read releases, kept in the
-  consumer's secrets.
+- **Consuming a release**: download the assets by tag, compare the SHA-256 with `SHA256SUMS` and, for releases built by
+  `release.yml`, run `gh attestation verify`. The Homebrew tap and Scoop bucket (below) do the first part by themselves.
 
 ### Runners
 
-`ubuntu-22.04` (Linux x64, and Linux arm64 as a cross build while private), `ubuntu-22.04-arm` (Linux arm64 once public: free
-for public repositories only), `macos-15`, `macos-15-intel`, `windows-2022`.
+`ubuntu-22.04` (Linux x64), `ubuntu-22.04-arm` (Linux arm64, free for public repositories only), `macos-15`,
+`macos-15-intel`, `windows-2022`. A private repository cross-builds linux-arm64 on x64 instead.

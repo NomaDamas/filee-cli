@@ -321,9 +321,11 @@ func isMachO(p string) bool {
 }
 
 // vendorSigned: the application bundles of calibre and LibreOffice keep the vendor's own signature, which signing a
-// single file inside would break.
+// single file inside would break; so do ffmpeg and ffprobe, which Martin Riedl signs with his Developer ID (the files
+// stay byte-identical to the pinned downloads).
 func vendorSigned(rel string) bool {
-	return strings.HasPrefix(rel, "engines/calibre/") || strings.HasPrefix(rel, "engines/libreoffice/")
+	return strings.HasPrefix(rel, "engines/calibre/") || strings.HasPrefix(rel, "engines/libreoffice/") ||
+		rel == "engines/ffmpeg/ffmpeg" || rel == "engines/ffmpeg/ffprobe"
 }
 
 // codesignMacOS signs every Mach-O file (the main program last) and verifies the program.
@@ -437,8 +439,8 @@ const packageReadme = "# filee-cli %s (%s)\n\n" +
 	"`THIRD-PARTY-NOTICES.md` for licenses.\n\n" +
 	"Run `%s version`, `%s formats`, `%s convert photo.png --to webp --json`. Put this folder (or a link to\n" +
 	"`%s`) on your `PATH` to use it from other programs. The `engines/` folder must stay next to the program.\n\n" +
-	"Larger engines (FFmpeg, Pandoc, LibreOffice, Ghostscript, calibre) are not included; if you install them yourself and\n" +
-	"they are on your `PATH`, the program finds them.\n%s"
+	"The engines FFmpeg, Pandoc, LibreOffice, Ghostscript and calibre are in `engines/` where this platform has them\n" +
+	"(see `THIRD-PARTY-NOTICES.md`); one you install yourself and put on your `PATH` is used only when `engines/` lacks it.\n%s"
 
 const linuxNote = "\nLinux needs the system libraries .NET itself needs, e.g. on Ubuntu 22.04:\n" +
 	"`sudo apt-get install -y ca-certificates libc6 libgcc-s1 libicu70 libssl3 libstdc++6 tzdata zlib1g`\n\n" +

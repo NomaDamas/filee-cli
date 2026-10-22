@@ -32,6 +32,13 @@ Nothing from upstream lives in this repository: `UPSTREAM` pins a tag and the ex
      Where upstream pins a binary whose build is not reproducible from published scripts (the Windows FFmpeg),
      `binaryOverrides` in `cmd/filee-build/engines.go` names the replacement and why.
    * *an engine added or dropped for a platform*: `engineSets` in `cmd/filee-build/engines.go`, then a pin file as above.
+   * *an engine bundled where upstream has no download* (FFmpeg and Ghostscript on macOS): listed in `extraEngines`
+     with the reason; its `binaries.<rid>` pin carries `kind` (`zip-program`: a zip holding one program, `archive_member`,
+     optional `companion` zips such as ffprobe; `conda-unix-bin`: a conda-forge macOS package of which only `bin/<program>`
+     and the licenses are kept). The build stops with "extraEngines[...] is obsolete" once upstream offers the engine.
+     FFmpeg on macOS follows Martin Riedl's release builds: take the new build's `versions.txt`, find the commit of
+     https://git.martin-riedl.de/ffmpeg/build-script whose `version/*` files match it, and re-pin every `platforms`
+     source containing `osx-*` from that commit's `script/build-*.sh` (download URL, SHA-256 computed by downloading).
 5. **Build locally** (any one platform is enough to catch most problems):
    ```sh
    go build -o filee-build ./cmd/filee-build
@@ -46,10 +53,9 @@ Nothing from upstream lives in this repository: `UPSTREAM` pins a tag and the ex
 6. **Patches**: avoid them. When one is unavoidable, put a `git format-patch`-style file in `patches/NNNN-name.patch`
    (applied in name order by `filee-build fetch`), explain it in the file header, and drop it as soon as upstream has
    the change. `UPSTREAM.md` in the package lists applied patches with their hashes.
-7. **Run the librarian check** (`AUTORAG_FILEE_LIVE=1 AUTORAG_FILEE_BIN=<filee-cli> bun run vitest run
-   test/live-e2e/filee-convert.test.ts` in `Marker-Inc-Korea/AutoRAG`, branch `feat/file-conversion-filee`).
-8. **Commit and push, then release**: `./filee-build local --publish` (see `docs/releasing.md`).
-9. Update the pinned version and SHA-256 in Dazzi's `scripts/release/stage-tools.mjs` from the release's `SHA256SUMS`.
+7. **Commit and push, then release**: tag `v<upstream version>-<revision>` on `main` and run `release.yml` on that tag
+   (docs/releasing.md); `./filee-build local --publish` does the same from this computer.
+8. The Homebrew tap and Scoop bucket pick the new release up by themselves (see docs/releasing.md).
 
 ## How THIRD-PARTY-NOTICES.md is generated
 

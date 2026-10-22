@@ -1,9 +1,10 @@
 name: CI
 
-# Manual only while the repository is private (Actions minutes are not available to it; see docs/releasing.md).
-# Switch `on:` to push/pull_request once CI can run.
+# Builds the five packages on GitHub's runners (free for a public repository). Every build downloads about 1.5 GB of
+# engines and takes tens of minutes, so it runs on pull requests and when started by hand, not on every push.
 
 on:
+  pull_request:
   workflow_dispatch:
 
 permissions:

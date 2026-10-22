@@ -29,11 +29,11 @@ Releases have five archives and one `SHA256SUMS`:
 | macOS Intel | `filee-cli-<version>-osx-x64.tar.gz` |
 | macOS Apple silicon | `filee-cli-<version>-osx-arm64.tar.gz` |
 
-`<version>` is the upstream version plus this repository's packaging revision, e.g. `1.12.0-1`.
+`<version>` is the upstream version plus this repository's packaging revision, e.g. `2.0.0-1`.
 
 ```sh
-# Download the asset and SHA256SUMS from the release page (a private repository needs `gh release download`):
-gh release download v1.12.0-1 --repo NomaDamas/filee-cli --pattern 'filee-cli-1.12.0-1-linux-x64.tar.gz' --pattern SHA256SUMS
+# Download the asset and SHA256SUMS from the release page (or use the Homebrew tap / Scoop bucket below):
+gh release download v2.0.0-1 --repo NomaDamas/filee-cli --pattern 'filee-cli-2.0.0-1-linux-x64.tar.gz' --pattern SHA256SUMS
 
 sha256sum --check --ignore-missing SHA256SUMS       # Linux
 shasum -a 256 --check --ignore-missing SHA256SUMS   # macOS
@@ -41,7 +41,7 @@ shasum -a 256 --check --ignore-missing SHA256SUMS   # macOS
 
 ```powershell
 # Windows: the hash must equal the line for the zip in SHA256SUMS
-(Get-FileHash .\filee-cli-1.12.0-1-win-x64.zip -Algorithm SHA256).Hash.ToLower()
+(Get-FileHash .\filee-cli-2.0.0-1-win-x64.zip -Algorithm SHA256).Hash.ToLower()
 Select-String 'win-x64' .\SHA256SUMS
 ```
 
@@ -54,8 +54,8 @@ remove it with `xattr -dr com.apple.quarantine filee-cli-<version>-osx-arm64` (f
 ## Use
 
 ```sh
-tar -xzf filee-cli-1.12.0-1-osx-arm64.tar.gz
-cd filee-cli-1.12.0-1-osx-arm64
+tar -xzf filee-cli-2.0.0-1-osx-arm64.tar.gz
+cd filee-cli-2.0.0-1-osx-arm64
 ./filee-cli version
 ./filee-cli convert photo.png --to webp --json
 ./filee-cli formats
@@ -69,6 +69,10 @@ Callers should run it as a **separate process** (it is a self-contained .NET pro
 It does not need a display. The `engines/` folder must stay next to the program. Linux needs the libraries .NET itself
 needs; see the package's `README.md`.
 
+Several `filee-cli` processes at the same time share one LibreOffice profile folder, which LibreOffice does not allow
+([#2](https://github.com/NomaDamas/filee-cli/issues/2)): give each process its own `FILEE_DATA_DIR`, or pass all files
+to one `filee-cli convert` (that parallelises safely).
+
 ### Inside the package
 
 | Path | |
@@ -76,7 +80,7 @@ needs; see the package's `README.md`.
 | `filee-cli`, `*.dll`/`*.so`/`*.dylib`, `filee-cli.deps.json` | the program, the .NET runtime and native libraries |
 | `engines/rhwp/` | rhwp (MIT), HWP/HWPX → PDF. Linux builds are compiled from source on Ubuntu 22.04 |
 | `engines/7zip/` | 7-Zip (LGPL-2.1+, unRAR restriction on the RAR code), archives |
-| `engines/pandoc/`, `engines/calibre/`, `engines/libreoffice/` (macOS, Windows), `engines/ffmpeg/` (Linux, Windows), `engines/ghostscript/` (Windows), `engines/h2orestart` + `engines/jre/` (Windows) | the vendors' own unmodified binaries, see below |
+| `engines/pandoc/`, `engines/calibre/`, `engines/libreoffice/` (macOS, Windows), `engines/ffmpeg/`, `engines/ghostscript/` (macOS, Windows), `engines/h2orestart` + `engines/jre/` (Windows) | the vendors' own unmodified binaries, see below |
 | `LICENSE`, `THIRD-PARTY-NOTICES.md`, `licenses/` | licenses, generated from the package contents |
 | `UPSTREAM.md` | upstream URL, tag, commit, patches, build date, SDK |
 
@@ -84,17 +88,25 @@ needs; see the package's `README.md`.
 
 Filee itself is MIT and calls these engines as **separate programs** (`filee-cli` starts them with command-line
 arguments and links none of their code). Each package carries the engines Filee offers on that platform, exactly the
-files upstream's `engines.json` pins (same URL and SHA-256), except FFmpeg on Windows: upstream pins a Gyan.dev build
-whose build scripts are not published, so this repository ships the BtbN GPL build of the same FFmpeg release, whose
-every dependency is pinned. Each engine keeps its license; the full list with versions, SHA-256 and licenses is in the
-package's `THIRD-PARTY-NOTICES.md`.
+files upstream's `engines.json` pins (same URL and SHA-256), with three exceptions where this repository ships another
+build of the **same release** because the pinned one does not exist or has no published build scripts:
+
+- FFmpeg on Windows: upstream pins a Gyan.dev build whose scripts are not published; the BtbN GPL build is shipped.
+- FFmpeg on macOS: Filee has no macOS download (it looks for one on the `PATH`); the packages carry
+  [Martin Riedl's](https://ffmpeg.martin-riedl.de) GPL build 9.0.2 (Developer-ID signed by him, signature kept), whose
+  build scripts and all 31 dependencies are pinned.
+- Ghostscript on macOS: likewise no download upstream; the packages carry conda-forge's `gs` 10.08.0, built from the
+  same feedstock commit as the Windows package upstream pins.
+
+Each engine keeps its license; the full list with versions, SHA-256 and licenses is in the package's
+`THIRD-PARTY-NOTICES.md`.
 
 | Engine | Where | License | Source |
 |---|---|---|---|
 | Pandoc 3.12 | all | GPL-2.0-or-later | hosted: `filee-cli-<version>-source-pandoc.tar.gz` |
-| FFmpeg 9.0.2 (BtbN build) | Linux, Windows | GPL-3.0-or-later | hosted: `…-source-ffmpeg.tar.gz` |
+| FFmpeg 9.0.2 (BtbN build; Martin Riedl build on macOS) | all | GPL-3.0-or-later | hosted: `…-source-ffmpeg.tar.gz` |
 | calibre 9.15.0 | all | GPL-3.0 | hosted: `…-source-calibre.tar.gz` |
-| Ghostscript 10.08 | Windows | AGPL-3.0 | hosted: `…-source-ghostscript.tar.gz` |
+| Ghostscript 10.08 | macOS, Windows | AGPL-3.0 | hosted: `…-source-ghostscript.tar.gz` |
 | H2Orestart 0.7.14, Eclipse Temurin JRE 21 | Windows | GPL-3.0; GPL-2.0 + Classpath exception | hosted: `…-source-h2orestart.tar.gz`, `…-source-jre.tar.gz` |
 | LibreOffice 26.2.6 | macOS, Windows | MPL-2.0 (+ LGPL/GPL parts) | TDF's own source release, URL and SHA-256 in the notices |
 | Microsoft VC++ runtime | Windows | proprietary redistributable | none exists |
@@ -107,9 +119,9 @@ pinned) and the pinned sources themselves; the machine-readable pins are in
 only the conversions it provided go away. If you install an engine yourself and put it on `PATH`, `filee-cli` uses
 the bundled copy first (Filee's lookup order), then the one on `PATH`.
 
-Engines Filee can use on another platform but that this package does not carry (for example Ghostscript on macOS) are
-listed in the "Optional engines, not distributed here" section of `THIRD-PARTY-NOTICES.md` with license and download
-link; install one on `PATH` and `filee-cli` finds it. `filee-cli` has no command to download engines.
+Engines Filee can use but that this package does not carry (Ghostscript and LibreOffice on Linux) are listed in the
+"Optional engines, not distributed here" section of `THIRD-PARTY-NOTICES.md` with license and download link; install
+one on `PATH` and `filee-cli` finds it. `filee-cli` has no command to download engines.
 
 On Linux the bundled calibre is a Qt program: it needs `libxcb1 libxkbcommon0 libfontconfig1 libfreetype6 libx11-6
 libegl1 libopengl0 libglx0` (apt names) even without a display. Without them only calibre's conversions (for example
@@ -137,9 +149,9 @@ go build -o filee-build ./cmd/filee-build
 ./filee-build local --publish       # after all five pass: tag, push the tag, create the GitHub release
 ```
 
-While the repository is private, GitHub Actions is not used: `local` builds macOS directly, Linux in Docker
+Without GitHub Actions, `local` builds macOS directly, Linux in Docker
 (`ubuntu:22.04`, then a second clean container for the smoke test) and Windows over SSH. The workflows in
-`.github/workflows` do the same on GitHub's runners and are switched on when that works (docs/releasing.md).
+`.github/workflows` do the same on GitHub's runners (docs/releasing.md).
 Each package is smoke-tested after unpacking: `filee-cli version`, exit codes, PNG→WebP, MD→DOCX, MD→HWPX→PDF with
 Korean text, ZIP→7Z, and Linux files are checked for glibc ≤ 2.35. Details: [docs/releasing.md](docs/releasing.md);
 keeping up with upstream: [docs/updating.md](docs/updating.md); trademark and licensing notes:

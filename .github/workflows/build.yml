@@ -2,7 +2,7 @@ name: Build packages
 
 # Reusable: builds, checks and smoke-tests the five packages from the upstream tag pinned in UPSTREAM, using the
 # filee-build Go program (cmd/filee-build). Called by ci.yml and release.yml. Uploads one artifact per RID.
-# While the repository is private these workflows are not used: `filee-build local` does the same on your computers.
+# Uses GitHub-hosted runners (free for public repositories); `filee-build local` does the same on your own computers.
 
 on:
   workflow_call:
@@ -22,6 +22,12 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 120
     steps:
+      # The pinned sources of the engines are about 9 GB and the archives made from them more; a stock runner has
+      # roughly 14 GB free. Remove preinstalled toolchains this job never uses.
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          df -h /
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false

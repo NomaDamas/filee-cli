@@ -16,18 +16,28 @@ import (
 	"github.com/klauspost/compress/zstd"
 )
 
-// engineSets lists, per RID, the third-party conversion engines bundled into engines/<id>. They are exactly the ones
-// Filee itself offers for that platform (upstream engines.json), minus rhwp and 7-Zip, which addEngines handles.
+// engineSets lists, per RID, the third-party conversion engines bundled into engines/<id>. They are the ones Filee
+// itself offers for that platform (upstream engines.json), minus rhwp and 7-Zip, which addEngines handles, plus the
+// engines in extraEngines (Filee finds them on the PATH there, so a package without them cannot convert video or EPS).
 var engineSets = map[string][]string{
 	"win-x64":     {"pandoc", "ffmpeg", "calibre", "ghostscript", "vcruntime", "libreoffice", "h2orestart", "jre"},
 	"linux-x64":   {"pandoc", "ffmpeg", "calibre"},
 	"linux-arm64": {"pandoc", "ffmpeg", "calibre"},
-	"osx-x64":     {"pandoc", "calibre", "libreoffice"},
-	"osx-arm64":   {"pandoc", "calibre", "libreoffice"},
+	"osx-x64":     {"pandoc", "calibre", "libreoffice", "ffmpeg", "ghostscript"},
+	"osx-arm64":   {"pandoc", "calibre", "libreoffice", "ffmpeg", "ghostscript"},
 }
 
-// binaryOverrides are the only places where the bundled binary is not the one upstream's engines.json pins: the
-// replacement must come with a complete source pin (data/engine-sources/<id>.json).
+// extraEngines are the engines bundled for a RID although upstream's engines.json has no download for it. The binary
+// pin in data/engine-sources/<id>.json is then the only description of the file, and it must carry a source pin.
+var extraEngines = map[string]string{
+	"ffmpeg/osx-x64":        "Filee 2.0.0 has no FFmpeg download for macOS (it finds one on the PATH, e.g. from Homebrew); this package bundles Martin Riedl's GPL build of the same FFmpeg release (9.0.2), whose build scripts and every dependency are pinned",
+	"ffmpeg/osx-arm64":      "Filee 2.0.0 has no FFmpeg download for macOS (it finds one on the PATH, e.g. from Homebrew); this package bundles Martin Riedl's GPL build of the same FFmpeg release (9.0.2), whose build scripts and every dependency are pinned",
+	"ghostscript/osx-x64":   "Filee 2.0.0 has no Ghostscript download for macOS (it finds one on the PATH); this package bundles conda-forge's build of the same Ghostscript release (10.08.0) that Filee downloads for Windows, built from one pinned feedstock commit",
+	"ghostscript/osx-arm64": "Filee 2.0.0 has no Ghostscript download for macOS (it finds one on the PATH); this package bundles conda-forge's build of the same Ghostscript release (10.08.0) that Filee downloads for Windows, built from one pinned feedstock commit",
+}
+
+// binaryOverrides are the only places where the bundled binary is not the one upstream's engines.json pins for a
+// platform it does list: the replacement must come with a complete source pin (data/engine-sources/<id>.json).
 var binaryOverrides = map[string]string{
 	"ffmpeg/win-x64": "upstream pins a Gyan.dev build whose build scripts and dependency pins are not published; the BtbN build of the same FFmpeg release is bundled instead",
 }
@@ -62,23 +72,41 @@ func requiredPrograms(id string, windows bool) []string {
 type BundledEngine struct {
 	ID, Version, URL, Sha256, Kind string
 	Size                           int64
-	Override                       string // why the binary differs from upstream's engines.json, if it does
+	Override                       string // why the binary differs from upstream's engines.json, or is not in it at all
+	Member                         string // zip-program: the program inside the zip
+	Companions                     map[string]companionFile
+}
+
+// companionFile is a second download that belongs to one engine binary (ffprobe, which Martin Riedl ships as a
+// separate zip of the same build).
+type companionFile struct {
+	URL    string `json:"url"`
+	Sha256 string `json:"sha256"`
+	Size   int64  `json:"size"`
 }
 
 type bundleBinary struct {
-	Version string `json:"version"`
-	URL     string `json:"url"`
-	Sha256  string `json:"sha256"`
-	Size    int64  `json:"size"`
+	Version       string                   `json:"version"`
+	URL           string                   `json:"url"`
+	Sha256        string                   `json:"sha256"`
+	Size          int64                    `json:"size"`
+	Kind          string                   `json:"kind"`           // only for extraEngines: how the download is unpacked
+	ArchiveMember string                   `json:"archive_member"` // zip-program: the program in the zip
+	Companion     map[string]companionFile `json:"companion"`
 }
 
 // resolveBundled returns the pinned binary of engine id for rid. It must be listed in data/engine-sources/<id>.json
 // (so no binary is shipped without a source pin) and equal upstream's engines.json unless binaryOverrides allows it.
+// An engine upstream has no download for on this platform (extraEngines) is described by the pin alone.
 func resolveBundled(id, rid string, m enginesManifest) (BundledEngine, error) {
 	var out BundledEngine
-	upstream, ok := m.forRID(rid)[id]
-	if !ok {
+	upstream, upstreamHas := m.forRID(rid)[id]
+	extra := extraEngines[id+"/"+rid]
+	if !upstreamHas && extra == "" {
 		return out, fmt.Errorf("upstream engines.json has no %s for %s", id, rid)
+	}
+	if upstreamHas && extra != "" {
+		return out, fmt.Errorf("extraEngines[%s/%s] is obsolete: upstream offers it for this platform now", id, rid)
 	}
 	var f struct {
 		Binaries map[string]bundleBinary `json:"binaries"`
@@ -93,6 +121,18 @@ func resolveBundled(id, rid string, m enginesManifest) (BundledEngine, error) {
 	}
 	if !ok {
 		return out, fmt.Errorf("%s has no binary pin for %s", file, rid)
+	}
+	if extra != "" {
+		if pin.URL == "" || len(pin.Sha256) != 64 || pin.Size <= 0 || pin.Kind == "" {
+			return out, fmt.Errorf("%s: incomplete binary pin for %s (url, sha256, size and kind are required)", file, rid)
+		}
+		for name, c := range pin.Companion {
+			if c.URL == "" || len(c.Sha256) != 64 || c.Size <= 0 {
+				return out, fmt.Errorf("%s: incomplete companion %s for %s", file, name, rid)
+			}
+		}
+		return BundledEngine{ID: id, Version: pin.Version, URL: pin.URL, Sha256: strings.ToLower(pin.Sha256), Kind: pin.Kind,
+			Size: pin.Size, Override: extra, Member: pin.ArchiveMember, Companions: pin.Companion}, nil
 	}
 	override := binaryOverrides[id+"/"+rid]
 	same := strings.EqualFold(pin.Sha256, upstream.Sha256)
@@ -157,6 +197,10 @@ func installEngines(rid, enginesDir, scratch string) ([]BundledEngine, error) {
 			if id == "vcruntime" {
 				vcruntime = dest
 			}
+		case "conda-unix-bin":
+			err = installCondaUnixBin(id, file, dest)
+		case "zip-program":
+			err = installZipPrograms(e, file, dest)
 		case "oxt":
 			ext := filepath.Join(enginesDir, "libreoffice", "share", "extensions")
 			if _, err := os.Stat(ext); err != nil {
@@ -490,6 +534,141 @@ func installConda(id, file, dest string) error {
 	}
 	if bins == 0 {
 		return fmt.Errorf("the conda package contains no Windows binaries (Library/bin)")
+	}
+	return nil
+}
+
+// installCondaUnixBin unpacks a conda-forge package for macOS and keeps only bin/<program> (the program named by
+// requiredPrograms) and the package's license files. Ghostscript's gs is one self-contained executable: its resources
+// are compiled in and it links only libSystem and libiconv, both part of macOS. conda-build writes the build prefix
+// into some files (info/has_prefix); gs is checked to run from its new place by the smoke test, not assumed.
+func installCondaUnixBin(id, file, dest string) error {
+	if err := rmtree(dest); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(dest, 0o755); err != nil {
+		return err
+	}
+	want := requiredPrograms(id, false)
+	if len(want) != 1 {
+		return fmt.Errorf("conda-unix-bin needs exactly one program for %s", id)
+	}
+	zr, err := zip.OpenReader(file)
+	if err != nil {
+		return err
+	}
+	defer zr.Close()
+	found := false
+	for _, f := range zr.File {
+		isPkg := strings.HasPrefix(f.Name, "pkg-") && strings.HasSuffix(f.Name, ".tar.zst")
+		isInfo := strings.HasPrefix(f.Name, "info-") && strings.HasSuffix(f.Name, ".tar.zst")
+		if !isPkg && !isInfo {
+			continue
+		}
+		rc, err := f.Open()
+		if err != nil {
+			return err
+		}
+		zd, err := zstd.NewReader(rc)
+		if err != nil {
+			rc.Close()
+			return err
+		}
+		tr := tar.NewReader(zd)
+		for {
+			h, err := tr.Next()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				zd.Close()
+				rc.Close()
+				return err
+			}
+			if h.Typeflag != tar.TypeReg {
+				continue
+			}
+			name := path.Clean(h.Name)
+			var rel string
+			var mode os.FileMode = 0o644
+			switch {
+			case isPkg && name == "bin/"+want[0]:
+				rel, mode, found = want[0], 0o755, true
+			case isInfo && strings.HasPrefix(name, "info/licenses/"):
+				rel = "licenses/" + strings.TrimPrefix(name, "info/licenses/")
+			case isInfo && name == "info/about.json":
+				rel = "licenses/about.json"
+			default:
+				continue
+			}
+			target, err := safeJoin(dest, rel)
+			if err == nil {
+				err = os.MkdirAll(filepath.Dir(target), 0o755)
+			}
+			if err == nil {
+				err = writeFile(target, tr, mode)
+			}
+			if err != nil {
+				zd.Close()
+				rc.Close()
+				return err
+			}
+		}
+		zd.Close()
+		rc.Close()
+	}
+	if !found {
+		return fmt.Errorf("the conda package has no bin/%s", want[0])
+	}
+	return nil
+}
+
+// installZipPrograms unpacks a zip that holds one program into dest, then the zips of its companions (ffprobe comes as
+// a zip of its own). The programs keep their vendor signature: nothing is rewritten.
+func installZipPrograms(e BundledEngine, file, dest string) error {
+	if err := rmtree(dest); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(dest, 0o755); err != nil {
+		return err
+	}
+	take := func(archive, member string) error {
+		zr, err := zip.OpenReader(archive)
+		if err != nil {
+			return err
+		}
+		defer zr.Close()
+		for _, f := range zr.File {
+			if f.Name != member || !f.Mode().IsRegular() {
+				continue
+			}
+			rc, err := f.Open()
+			if err != nil {
+				return err
+			}
+			err = writeFile(filepath.Join(dest, member), rc, 0o755)
+			rc.Close()
+			return err
+		}
+		return fmt.Errorf("%s has no %s", filepath.Base(archive), member)
+	}
+	if e.Member == "" {
+		return fmt.Errorf("%s: the pin names no archive_member", e.ID)
+	}
+	if err := take(file, e.Member); err != nil {
+		return err
+	}
+	for name, c := range e.Companions {
+		extra, err := download(c.URL, c.Sha256, filepath.Join(cacheDir(), "downloads"))
+		if err != nil {
+			return err
+		}
+		if st, err := os.Stat(extra); err != nil || st.Size() != c.Size {
+			return fmt.Errorf("%s: %s is not the pinned %d bytes", e.ID, name, c.Size)
+		}
+		if err := take(extra, name); err != nil {
+			return err
+		}
 	}
 	return nil
 }

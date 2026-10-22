@@ -5,8 +5,9 @@ name: Release
 # (`filee-build release` checks it) and point at a commit on main. All five packages are built and smoke-tested first,
 # and the Corresponding Source of the bundled engines is fetched; the release job only runs when all of it succeeds.
 #
-# Manual, not on tag push, because `filee-build local --publish` pushes the tag and creates the release from this
-# computer while the repository is private. Use this workflow once GitHub Actions can run for the repository.
+# Manual, not on tag push: `filee-build local --publish` can also push the tag and create the release from a
+# computer. The Homebrew tap and the Scoop bucket (their own repositories) poll the latest release and update
+# themselves, so this workflow needs no token for them.
 
 on:
   workflow_dispatch:
@@ -64,7 +65,7 @@ jobs:
 
       # Signed build provenance through GitHub's OIDC token and Sigstore. GitHub supports it for public repositories
       # (and Enterprise Cloud); the public-good Sigstore log would also record the name of a private repository,
-      # so the step runs only once this repository is public.
+      # so the step runs only while this repository is public.
       - name: Attest build provenance
         if: ${{ github.event.repository.private == false }}
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2

@@ -19,10 +19,10 @@ repository's own scripts), `THIRD-PARTY-NOTICES.md`, `licenses/` and `UPSTREAM.m
 ## Trademark: unresolved, handled conservatively
 
 Upstream states no trademark or branding policy: no `TRADEMARK`/brand file, no such section in its README, LICENSE
-or THIRD-PARTY-NOTICES (checked in the v1.12.0 tree). MIT does not grant trademark rights. So:
+or THIRD-PARTY-NOTICES (checked in the v2.0.0 tree). MIT does not grant trademark rights. So:
 
 - every README and package file calls this an **unofficial redistribution**;
-- the executable keeps the name `filee-cli` (what librarian and Dazzi search for) and the strings inside the
+- the executable keeps the name `filee-cli` (what programs that look for it expect) and the strings inside the
   program are upstream's; the Filee logo and icons are not used by this repository, and the GUI is not shipped;
 - release titles say "filee-cli"; nothing says "Filee <version>" as if it were an official release.
 
