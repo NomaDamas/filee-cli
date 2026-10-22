@@ -1,0 +1,986 @@
+On-demand engines for filee-cli.
+
+Filee's app downloads FFmpeg, Pandoc, Ghostscript, calibre and LibreOffice from Settings -> Engines. The command line
+had no way to do that, so those conversions failed unless the engine was on the PATH. This patch:
+
+ * adds `filee engines list|install|remove` and installs the engines a conversion needs before it runs (`convert`, and
+   per batch in `watch`), with `--no-install` to turn that off. Progress and messages go to stderr; --json stays clean.
+   Concurrent processes take turns through a lock file in the engines folder. Empty files never trigger a download.
+ * adds the two engines upstream does not offer on macOS to engines.json: FFmpeg (Martin Riedl's release build, kind
+   `zip-programs` with ffprobe as a companion file) and Ghostscript (conda-forge's gs, kind `conda-unix`), and the two
+   install kinds that unpack them. Every download is checked against its SHA-256 before it is unpacked.
+ * tests for the new install kinds, companions, and path safety.
+
+Drop it when upstream ships an equivalent.
+
+diff --git a/src/Filee.Cli/Cli.cs b/src/Filee.Cli/Cli.cs
+index 016d160..9571b0a 100644
+--- a/src/Filee.Cli/Cli.cs
++++ b/src/Filee.Cli/Cli.cs
+@@ -9,6 +9,7 @@
+ using Filee.Core.Platform;
+ using Filee.Core.Presets;
+ using Filee.Core.Watching;
++using Filee.Engines.Infrastructure;
+ 
+ namespace Filee.Cli;
+ 
+@@ -46,10 +47,32 @@ public static async Task<int> RunAsync(IReadOnlyList<string> args, TextWriter ou
+             "convert" => await ConvertAsync(options, host, output, errors, cancellationToken),
+             "watch" => await WatchAsync(options, host, output, errors, cancellationToken),
+             "formats" => ListFormats(options, host, output, errors),
++            "engines" => await EnginesAsync(options, host, output, errors, cancellationToken),
+             _ => ListPresets(host, output),
+         };
+     }
+ 
++    /// <summary>
++    /// Installs the engines the files need and the engines in place do not provide (unless --no-install). A conversion
++    /// whose engine cannot be installed is left to fail per file, with the reason on the error stream.
++    /// </summary>
++    private static async Task EnsureEnginesAsync(IReadOnlyList<string> files, Preset preset, CliHost host, CliOptions options,
++        TextWriter errors, CancellationToken cancellationToken)
++    {
++        var setup = new EngineSetup(host, errors);
++        var needed = setup.Needed(files, preset);
++        if (needed.Count == 0)
++            return;
++        if (options.NoInstall)
++        {
++            if (!options.Quiet)
++                errors.WriteLine($"filee: this conversion needs {string.Join(" and ", needed.Select(p => p.Id))}, which is not installed. "
++                                 + $"Run 'filee engines install {string.Join(" ", needed.Select(p => p.Id))}' or leave out --no-install.");
++            return;
++        }
++        await setup.InstallAsync(needed, options.Quiet, cancellationToken);
++    }
++
+     private static async Task<int> ConvertAsync(CliOptions options, CliHost host, TextWriter output, TextWriter errors, CancellationToken cancellationToken)
+     {
+         if (ResolvePreset(options, host, errors) is not { } preset)
+@@ -69,6 +92,7 @@ private static async Task<int> ConvertAsync(CliOptions options, CliHost host, Te
+             return NothingToDo;
+         }
+ 
++        await EnsureEnginesAsync(files, preset, host, options, errors, cancellationToken);
+         var job = await RunJobAsync(files, preset, host, options.Json || options.Quiet ? null : output, cancellationToken);
+         var done = job.Files.Count(f => f.State == FileState.Done);
+         var failed = job.Files.Count(f => f.State is FileState.Failed or FileState.Cancelled);
+@@ -100,7 +124,11 @@ private static async Task<int> WatchAsync(CliOptions options, CliHost host, Text
+ 
+         var settle = options.SettleSeconds is { } seconds ? TimeSpan.FromSeconds(seconds) : (TimeSpan?)null;
+         await using var watcher = new FolderWatcher(rule,
+-            async (files, token) => await RunJobAsync(files, preset, host, options.Quiet ? null : output, token),
++            async (files, token) =>
++            {
++                await EnsureEnginesAsync(files, preset, host, options, errors, token);
++                return await RunJobAsync(files, preset, host, options.Quiet ? null : output, token);
++            },
+             settleTime: settle);
+         if (!watcher.Start())
+         {
+@@ -119,6 +147,51 @@ private static async Task<int> WatchAsync(CliOptions options, CliHost host, Text
+         return Success;
+     }
+ 
++    /// <summary>"filee engines list|install|remove": the optional engines Filee downloads when a conversion needs them.</summary>
++    private static async Task<int> EnginesAsync(CliOptions options, CliHost host, TextWriter output, TextWriter errors, CancellationToken cancellationToken)
++    {
++        var setup = new EngineSetup(host, errors);
++        var action = options.Inputs.Count == 0 ? "list" : options.Inputs[0].ToLowerInvariant();
++        if (action == "list")
++        {
++            setup.List(output);
++            return Success;
++        }
++        var names = options.Inputs.Skip(1).SelectMany(n => n.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)).ToList();
++        if (names.Count == 1 && names[0].Equals("all", StringComparison.OrdinalIgnoreCase))
++            names = EngineDownloads.Packages.Select(p => p.Id).ToList();
++        var packages = new List<EnginePackage>();
++        foreach (var name in names)
++        {
++            if (EngineSetup.Find(name) is not { } package)
++            {
++                errors.WriteLine($"filee: unknown engine '{name}'. Run 'filee engines list' for the names.");
++                return UsageError;
++            }
++            packages.Add(package);
++        }
++        if (action == "install")
++            return await setup.InstallAsync(packages, options.Quiet, cancellationToken, explicitRequest: true) ? Success : SomeFailed;
++
++        var failed = 0;
++        foreach (var package in packages)
++        {
++            try
++            {
++                if (setup.Remove(package))
++                    output.WriteLine($"removed {package.Id}");
++                else
++                    output.WriteLine($"{package.Id} was not installed by filee");
++            }
++            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
++            {
++                errors.WriteLine($"filee: could not remove {package.Id}: {ex.Message}");
++                failed++;
++            }
++        }
++        return failed == 0 ? Success : SomeFailed;
++    }
++
+     /// <summary>Runs one job and prints each file's result as soon as it is final (when <paramref name="output"/> is given).</summary>
+     private static async Task<ConversionJob> RunJobAsync(IReadOnlyList<string> files, Preset preset, CliHost host, TextWriter? output,
+         CancellationToken cancellationToken)
+@@ -332,7 +405,7 @@ private static int ListFormats(CliOptions options, CliHost host, TextWriter outp
+             output.WriteLine($"{from.DisplayName} ({string.Join(", ", from.Extensions)}) converts to:");
+             output.WriteLine(now.Count > 0 ? "  " + string.Join(", ", now) : "  (nothing with the engines installed now)");
+             if (later.Count > 0)
+-                output.WriteLine($"With optional engines (install them in Filee, Settings → Engines):{Environment.NewLine}  {string.Join(", ", later)}");
++                output.WriteLine($"With engines filee-cli downloads when a conversion needs them ('filee engines list'):{Environment.NewLine}  {string.Join(", ", later)}");
+             return Success;
+         }
+ 
+diff --git a/src/Filee.Cli/CliOptions.cs b/src/Filee.Cli/CliOptions.cs
+index 8eb1b25..2ac2974 100644
+--- a/src/Filee.Cli/CliOptions.cs
++++ b/src/Filee.Cli/CliOptions.cs
+@@ -21,10 +21,13 @@ internal sealed record CliOptions
+     public bool KeepDates { get; set; }
+ 
+     public bool Zip { get; set; }
++
++    /// <summary>Never download an engine on demand; a conversion that needs one fails and says which.</summary>
++    public bool NoInstall { get; set; }
+     public double? SettleSeconds { get; set; }
+     public string? Error { get; set; }
+ 
+-    public static readonly string[] Commands = ["convert", "watch", "formats", "presets", "help", "version"];
++    public static readonly string[] Commands = ["convert", "watch", "formats", "presets", "engines", "help", "version"];
+ 
+     public static CliOptions Parse(IReadOnlyList<string> args)
+     {
+@@ -100,6 +103,9 @@ public static CliOptions Parse(IReadOnlyList<string> args)
+                 case "--zip":
+                     options.Zip = true;
+                     break;
++                case "--no-install":
++                    options.NoInstall = true;
++                    break;
+                 case "--settle":
+                     var settle = Value();
+                     if (settle is not null)
+@@ -127,6 +133,10 @@ public static CliOptions Parse(IReadOnlyList<string> args)
+             "convert" when options.Inputs.Count == 0 => "Give at least one file or folder to convert.",
+             "convert" or "watch" when options.To is null == (options.Preset is null) => "Use either --to <format> or --preset <preset>.",
+             "watch" when options.Inputs.Count != 1 => "Give exactly one folder to watch.",
++            "engines" when options.Inputs.Count > 0 && options.Inputs[0].ToLowerInvariant() is not ("list" or "install" or "remove") =>
++                $"Unknown engines command '{options.Inputs[0]}'. Use list, install or remove.",
++            "engines" when options.Inputs.Count > 0 && options.Inputs[0].ToLowerInvariant() is "install" or "remove" && options.Inputs.Count < 2 =>
++                $"Name the engines to {options.Inputs[0].ToLowerInvariant()}, e.g. 'engines {options.Inputs[0].ToLowerInvariant()} ffmpeg'.",
+             _ => null,
+         };
+         return options;
+diff --git a/src/Filee.Cli/EngineSetup.cs b/src/Filee.Cli/EngineSetup.cs
+new file mode 100644
+index 0000000..c25949a
+--- /dev/null
++++ b/src/Filee.Cli/EngineSetup.cs
+@@ -0,0 +1,277 @@
++// Installs the optional engines (LibreOffice, Pandoc, Ghostscript, FFmpeg, calibre) when a conversion needs one that
++// is not there, and implements "filee engines list|install|remove". The app does the same from Settings → Engines;
++// the command line has no window to ask in, so a conversion that cannot run installs the engine itself, unless
++// --no-install is given. Progress goes to the error stream, so --json output stays one clean document.
++
++using Filee.Core.Conversion;
++using Filee.Core.Formats;
++using Filee.Core.Presets;
++using Filee.Engines.Infrastructure;
++
++namespace Filee.Cli;
++
++internal sealed class EngineSetup
++{
++    private readonly CliHost _host;
++    private readonly EngineInstaller _installer;
++    private readonly TextWriter _log;
++
++    public EngineSetup(CliHost host, TextWriter log, EngineInstaller? installer = null)
++    {
++        _host = host;
++        _log = log;
++        if (installer is null)
++        {
++            // Redirects are followed by the installer itself (mirrors may use plain HTTP; every file is checked by SHA-256).
++            var http = new HttpClient(new SocketsHttpHandler { AllowAutoRedirect = false }) { Timeout = Timeout.InfiniteTimeSpan };
++            http.DefaultRequestHeaders.UserAgent.ParseAdd($"filee-cli/{Help.Version}");
++            installer = new EngineInstaller(http);
++        }
++        _installer = installer;
++    }
++
++    /// <summary>The package with this id, or null.</summary>
++    public static EnginePackage? Find(string id) =>
++        EngineDownloads.Packages.FirstOrDefault(p => string.Equals(p.Id, id, StringComparison.OrdinalIgnoreCase));
++
++    /// <summary>
++    /// Packages that would make the files convertible, in the order that adds the fewest: for each file whose route
++    /// does not exist with the engines now in place, the first not-installed package that gives it one. A route that
++    /// needs two packages (EPS → PDF → DOCX with Ghostscript and LibreOffice) is found in a second round.
++    /// </summary>
++    public IReadOnlyList<EnginePackage> Needed(IEnumerable<string> files, Preset preset)
++    {
++        var chosen = new List<EnginePackage>();
++        // A 0-byte file fails with "The file is empty" whatever engines there are, so it is no reason to download one.
++        var sources = files.Where(f => !IsEmptyFile(f)).Select(FormatRegistry.Detect).Where(f => f is not null).Select(f => f!).DistinctBy(f => f.Id).ToList();
++        if (sources.Count == 0)
++            return chosen;
++        var candidates = EngineDownloads.Packages.Where(p => EngineDownloads.CanDownload(p) && !IsAvailable(p)).ToList();
++
++        foreach (var source in sources)
++        {
++            var target = preset.TargetFormat == BuiltInData.SameAsSource ? source.Id : preset.TargetFormat;
++            if (CanConvert(source.Id, target, preset, chosen))
++                continue;
++            // One package first, then pairs (a route through PostScript and then an Office format).
++            var single = candidates.Where(p => !chosen.Contains(p)).FirstOrDefault(p => CanConvert(source.Id, target, preset, [.. chosen, p]));
++            if (single is not null)
++            {
++                chosen.Add(single);
++                continue;
++            }
++            foreach (var first in candidates.Where(p => !chosen.Contains(p)))
++            {
++                var second = candidates.Where(p => p != first && !chosen.Contains(p))
++                    .FirstOrDefault(p => CanConvert(source.Id, target, preset, [.. chosen, first, p]));
++                if (second is null)
++                    continue;
++                chosen.AddRange([first, second]);
++                break;
++            }
++        }
++        return chosen;
++    }
++
++    private static bool IsEmptyFile(string path)
++    {
++        try
++        {
++            var info = new FileInfo(path);
++            return info.Exists && info.Length == 0;
++        }
++        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
++        {
++            return false;
++        }
++    }
++
++    /// <summary>Whether a route exists when the engines in place and <paramref name="extra"/> are all there.</summary>
++    private bool CanConvert(string from, string to, Preset preset, IReadOnlyList<EnginePackage> extra)
++    {
++        var assumed = extra.SelectMany(p => p.ConverterIds).ToList();
++        var planner = assumed.Count == 0 ? _host.Catalog.CreatePlanner() : _host.Catalog.CreatePlanner(assumed);
++        if (preset.Pdf.MergeIntoSingle && to == "pdf" && FormatRegistry.FindById(from)?.Id != "pdf")
++            return planner.CanConvert(from, "pdf");
++        var frames = preset.SavesFramesOf(from);
++        var motion = preset.ExtractsMotionOf(from);
++        var live = preset.MakesLivePhotoOf(from);
++        return planner.CanConvert(from, to, frames, motion, live);
++    }
++
++    /// <summary>True when the engine is installed (Filee's copy, the user's own, or one on this computer).</summary>
++    public bool IsAvailable(EnginePackage package) =>
++        package.ConverterIds.All(id => _host.Catalog.All.Any(c => c.Id == id && _host.Catalog.StatusOf(c).IsAvailable));
++
++    /// <summary>Downloads and installs the packages one after the other, showing progress. Returns false when one failed.</summary>
++    /// <param name="explicitRequest">The user asked for these engines by name: install Filee's own copy even when the computer has one.
++    /// A conversion that needs an engine passes false and only installs what is missing altogether.</param>
++    public async Task<bool> InstallAsync(IEnumerable<EnginePackage> packages, bool quiet, CancellationToken cancellationToken, bool explicitRequest = false)
++    {
++        // Two filee-cli processes must not unpack into the same folder, so installs take turns across processes too.
++        using var gate = await InstallLock.AcquireAsync(Path.Combine(EngineEnvironment.DownloadRoot, ".install.lock"), _log, quiet, cancellationToken);
++        foreach (var package in packages)
++        {
++            // Another process may have installed it while this one waited for the lock.
++            _host.Catalog.Refresh();
++            EngineEnvironment.ForgetSystemCopies();
++            var ours = _installer.IsInstalled(package) && _installer.IsUpToDate(package);
++            if (explicitRequest ? ours : IsAvailable(package))
++            {
++                if (!quiet)
++                    _log.WriteLine($"filee: {package.Id} is already available ({(ours ? "installed by filee" : "found on this computer")}).");
++                continue;
++            }
++            if (!EngineDownloads.CanDownload(package))
++            {
++                _log.WriteLine($"filee: {EngineDownloads.UnavailableReason(package)}");
++                return false;
++            }
++            if (!quiet)
++                _log.WriteLine($"filee: installing {package.Id} ({FormatBytes(EngineDownloads.DownloadSize(package))} download, {FormatBytes(package.InstalledSize)} on disk) into {EngineEnvironment.DownloadRoot}");
++            try
++            {
++                var progress = new ProgressLine(_log, quiet);
++                await _installer.InstallAsync(package, progress, cancellationToken);
++                progress.Finish();
++            }
++            catch (OperationCanceledException)
++            {
++                _log.WriteLine($"filee: installing {package.Id} was cancelled.");
++                return false;
++            }
++            catch (Exception ex) when (ex is HttpRequestException or IOException or InvalidDataException or InvalidOperationException
++                                           or PlatformNotSupportedException or NotSupportedException or UnauthorizedAccessException)
++            {
++                _log.WriteLine($"filee: could not install {package.Id}: {ex.Message}");
++                return false;
++            }
++            _host.Catalog.Refresh();
++            EngineEnvironment.ForgetSystemCopies();
++            if (!IsAvailable(package))
++            {
++                _log.WriteLine($"filee: {package.Id} was installed but does not start on this computer.");
++                return false;
++            }
++            if (!quiet)
++                _log.WriteLine($"filee: {package.Id} is installed.");
++        }
++        return true;
++    }
++
++    /// <summary>Removes Filee's downloaded copy of the package. Returns false when there was none.</summary>
++    public bool Remove(EnginePackage package)
++    {
++        if (!_installer.IsInstalled(package))
++            return false;
++        _installer.Uninstall(package);
++        _host.Catalog.Refresh();
++        return true;
++    }
++
++    /// <summary>"id  status  size  what it is for" for every package, for "filee engines list".</summary>
++    public void List(TextWriter output)
++    {
++        output.WriteLine($"{"ENGINE",-12} {"STATUS",-26} {"DOWNLOAD",-10} USED FOR");
++        foreach (var package in EngineDownloads.Packages)
++        {
++            output.WriteLine($"{package.Id,-12} {Status(package),-26} {(EngineDownloads.CanDownload(package) ? FormatBytes(EngineDownloads.DownloadSize(package)) : "-"),-10} {Purpose(package.Id)}");
++        }
++        output.WriteLine();
++        output.WriteLine($"Installed into {EngineEnvironment.DownloadRoot}. A conversion that needs one installs it by itself (--no-install to stop that).");
++        output.WriteLine("rhwp and 7-Zip are part of filee-cli and need no download.");
++    }
++
++    private string Status(EnginePackage package)
++    {
++        if (_installer.IsInstalled(package) && IsAvailable(package))
++            return _installer.IsUpToDate(package) ? "installed" : "installed (older version)";
++        if (IsAvailable(package))
++            return "found on this computer";
++        return EngineDownloads.CanDownload(package) ? "not installed" : "not available here";
++    }
++
++    internal static string Purpose(string id) => id switch
++    {
++        "libreoffice" => "DOC, PPT, RTF, OpenDocument and other older or rare office formats",
++        "pandoc" => "Markdown, LaTeX, Org, AsciiDoc and other markup; Markdown to slides",
++        "ghostscript" => "EPS and PostScript",
++        "ffmpeg" => "video and audio",
++        "calibre" => "Kindle (MOBI, AZW3) and rare e-book formats",
++        _ => "",
++    };
++
++    internal static string FormatBytes(long bytes) => bytes >= 1_000_000_000
++        ? $"{bytes / 1_000_000_000.0:0.0} GB"
++        : $"{Math.Max(1, bytes / 1_000_000)} MB";
++
++    /// <summary>One line of progress that redraws itself in a terminal and prints a line per step otherwise.</summary>
++    private sealed class ProgressLine(TextWriter log, bool quiet) : IProgress<EngineInstallProgress>
++    {
++        private int _lastPercent = -1;
++        private string _lastStage = "";
++        private readonly bool _terminal = !Console.IsErrorRedirected;
++        private DateTime _lastWrite = DateTime.MinValue;
++
++        public void Report(EngineInstallProgress value)
++        {
++            if (quiet)
++                return;
++            var percent = (int)(value.Fraction * 100);
++            var stage = value.Stage == EngineInstallStage.Downloading ? "downloading" : "unpacking";
++            if (_terminal)
++            {
++                if (percent == _lastPercent && stage == _lastStage || (DateTime.UtcNow - _lastWrite).TotalMilliseconds < 100 && stage == _lastStage)
++                    return;
++                log.Write($"\r  {stage} {value.ComponentId} {percent,3}%  {FormatBytes(value.BytesDone)} / {FormatBytes(value.BytesTotal)}   ");
++            }
++            else
++            {
++                // A log file or a pipe: a line at every tenth, not a hundred of them.
++                if (stage == _lastStage && percent / 10 == _lastPercent / 10)
++                    return;
++                log.WriteLine($"  {stage} {value.ComponentId} {percent}%");
++            }
++            _lastPercent = percent;
++            _lastStage = stage;
++            _lastWrite = DateTime.UtcNow;
++        }
++
++        public void Finish()
++        {
++            if (!quiet && _terminal && _lastPercent >= 0)
++                log.WriteLine();
++        }
++    }
++}
++
++/// <summary>An exclusive file lock held while engines are installed, so two processes never unpack into one folder.</summary>
++internal sealed class InstallLock : IDisposable
++{
++    private readonly FileStream _file;
++
++    private InstallLock(FileStream file) => _file = file;
++
++    public static async Task<InstallLock> AcquireAsync(string path, TextWriter log, bool quiet, CancellationToken cancellationToken)
++    {
++        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
++        var told = false;
++        while (true)
++        {
++            try
++            {
++                // FileShare.None: a second process cannot open the file until the first one closes it (or exits).
++                return new InstallLock(new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None));
++            }
++            catch (IOException)
++            {
++                if (!told && !quiet)
++                    log.WriteLine("filee: another filee-cli is installing an engine; waiting for it.");
++                told = true;
++                await Task.Delay(500, cancellationToken);
++            }
++        }
++    }
++
++    public void Dispose() => _file.Dispose();
++}
+diff --git a/src/Filee.Cli/Help.cs b/src/Filee.Cli/Help.cs
+index 3ec9e02..8590500 100644
+--- a/src/Filee.Cli/Help.cs
++++ b/src/Filee.Cli/Help.cs
+@@ -15,6 +15,7 @@ internal static class Help
+         "watch" => Watch,
+         "formats" => "Usage: filee formats [<format>]\n\nLists every format, or what one format converts to.\n",
+         "presets" => "Usage: filee presets\n\nLists the presets saved in Filee (built-in and your own).\n",
++        "engines" => Engines,
+         _ => General,
+     };
+ 
+@@ -27,6 +28,7 @@ filee convert <files or folders...> --preset <preset> [options]
+           filee watch <folder> --to <format> [options]
+           filee formats [<format>]
+           filee presets
++          filee engines [list | install <engine...> | remove <engine...>]
+           filee help [<command>]
+           filee version
+ 
+@@ -36,7 +38,9 @@ filee convert *.png --to webp --quality 80 -o converted
+           filee convert D:\Scans --recursive --preset to-pdf
+           filee watch D:\Inbox --to pdf --move-originals
+ 
+-        Presets and engines are the ones in the Filee app. Exit codes: 0 all converted, 1 some failed,
++        Presets are the ones in the Filee app. Engines that are not part of filee-cli (LibreOffice, Pandoc, Ghostscript,
++        FFmpeg, calibre) are downloaded the first time a conversion needs one; 'filee engines list' shows them.
++        Exit codes: 0 all converted, 1 some failed,
+         2 wrong arguments or a missing input, 3 nothing to convert.
+ 
+         """;
+@@ -57,10 +61,24 @@ Files can be wildcards (*.heic). Folders convert the files in them that Filee kn
+               --keep-dates       Give converted files the created and modified dates of the originals
+               --zip              Save the result of each file as one ZIP (a Shapefile's files together)
+               --json             Print the result as JSON (for scripts and other programs)
++              --no-install       Never download an engine; a conversion that needs one fails and names it
+               --quiet            Print nothing but errors
+ 
+         """;
+ 
++    private const string Engines = """
++        Usage: filee engines [list]
++               filee engines install <engine...|all>
++               filee engines remove <engine...|all>
++
++        Engines are separate programs that do some conversions: libreoffice, pandoc, ghostscript, ffmpeg, calibre.
++        They are not part of filee-cli. A conversion that needs one downloads it (checked against a pinned SHA-256)
++        into the engines folder of your Filee data folder, and goes on; pass --no-install to convert and fail instead.
++        'install' gets engines ahead of time, for example before going offline; 'remove' deletes the downloaded copy.
++        An engine already on this computer (on the PATH, in /Applications) is used and not downloaded again.
++
++        """;
++
+     private const string Watch = """
+         Usage: filee watch <folder> (--to <format> | --preset <preset>) [options]
+ 
+@@ -77,6 +95,7 @@ converted at start
+               --settle <seconds> How long a file must stay unchanged (default 2)
+               --keep-dates       Give converted files the created and modified dates of the originals
+               --zip              Save the result of each file as one ZIP (a Shapefile's files together)
++              --no-install       Never download an engine; a conversion that needs one fails and names it
+               --quiet            Print nothing but errors
+ 
+         """;
+diff --git a/src/Filee.Engines/Infrastructure/EngineDownloads.cs b/src/Filee.Engines/Infrastructure/EngineDownloads.cs
+index 7ae3e30..b762d08 100644
+--- a/src/Filee.Engines/Infrastructure/EngineDownloads.cs
++++ b/src/Filee.Engines/Infrastructure/EngineDownloads.cs
+@@ -6,12 +6,18 @@
+ 
+ namespace Filee.Engines.Infrastructure;
+ 
++/// <summary>A second file of a component that is downloaded and checked on its own (ffprobe next to ffmpeg).</summary>
++public sealed record EngineCompanion(string Url, string Sha256, long Size);
++
+ /// <summary>One download from engines.json.</summary>
+ /// <param name="Kind">
+-/// Archive format: zip, tar.gz, tar.xz, dmg, msi, oxt or conda.
++/// Archive format: zip, tar.gz, tar.xz, dmg, msi, oxt or conda; zip-programs (zips that each hold one program, the
++/// component's file and its companions) and conda-unix (the program of a conda package for macOS) are new.
+ /// </param>
+ /// <param name="Size">Download size in bytes.</param>
+-public sealed record EngineComponent(string Id, string Version, string Url, string Sha256, long Size, string Kind);
++/// <param name="Companions">More files that belong to the component, each with its own SHA-256.</param>
++public sealed record EngineComponent(string Id, string Version, string Url, string Sha256, long Size, string Kind,
++    IReadOnlyList<EngineCompanion>? Companions = null);
+ 
+ /// <summary>A set of components the user installs together, e.g. LibreOffice with its HWP import filter and Java.</summary>
+ /// <param name="Components">Installed in this order (the LibreOffice extension needs LibreOffice first).</param>
+@@ -47,7 +53,8 @@ public static class EngineDownloads
+     ];
+ 
+     /// <summary>Total download size of a package in bytes.</summary>
+-    public static long DownloadSize(EnginePackage package) => package.Components.Sum(c => Components.GetValueOrDefault(c)?.Size ?? 0);
++    public static long DownloadSize(EnginePackage package) =>
++        package.Components.Sum(c => Components.GetValueOrDefault(c) is { } component ? component.Size + (component.Companions?.Sum(x => x.Size) ?? 0) : 0);
+ 
+     public static bool CanDownload(EnginePackage package) => package.Components.Count > 0 && package.Components.All(Components.ContainsKey);
+ 
+@@ -106,7 +113,11 @@ public static IReadOnlyDictionary<string, EngineComponent> ComponentsForRuntime(
+                 p.Value.GetProperty("url").GetString()!,
+                 p.Value.GetProperty("sha256").GetString()!,
+                 p.Value.GetProperty("size").GetInt64(),
+-                p.Value.GetProperty("kind").GetString()!));
++                p.Value.GetProperty("kind").GetString()!,
++                p.Value.TryGetProperty("companions", out var companions)
++                    ? companions.EnumerateArray().Select(c => new EngineCompanion(
++                        c.GetProperty("url").GetString()!, c.GetProperty("sha256").GetString()!, c.GetProperty("size").GetInt64())).ToList()
++                    : null));
+     }
+ 
+     private static bool RunsOn(JsonElement component, Version? macOSVersion) =>
+diff --git a/src/Filee.Engines/Infrastructure/EngineInstaller.cs b/src/Filee.Engines/Infrastructure/EngineInstaller.cs
+index 12fe5fa..a7f2c4a 100644
+--- a/src/Filee.Engines/Infrastructure/EngineInstaller.cs
++++ b/src/Filee.Engines/Infrastructure/EngineInstaller.cs
+@@ -58,7 +58,13 @@ public EngineInstaller(HttpClient http, string? root = null, IReadOnlyDictionary
+     /// <summary>True when every component is installed in the version engines.json pins.</summary>
+     public bool IsUpToDate(EnginePackage package) =>
+         package.Components.All(c => _components.TryGetValue(c, out var component)
+-            && string.Equals(Marker(c), component.Sha256, StringComparison.OrdinalIgnoreCase));
++            && string.Equals(Marker(c), MarkerOf(component), StringComparison.OrdinalIgnoreCase));
++
++    /// <summary>What the marker file holds: the component's hash, and the hashes of its companions when it has some.</summary>
++    private static string MarkerOf(EngineComponent component) =>
++        component.Companions is { Count: > 0 } extras ? component.Sha256 + "+" + string.Join("+", extras.Select(c => c.Sha256)) : component.Sha256;
++
++    private static long TotalSize(EngineComponent component) => component.Size + (component.Companions?.Sum(c => c.Size) ?? 0);
+ 
+     /// <summary>Downloads and unpacks the components that are missing or outdated.</summary>
+     public async Task InstallAsync(EnginePackage package, IProgress<EngineInstallProgress>? progress, CancellationToken cancellationToken)
+@@ -67,10 +73,10 @@ public async Task InstallAsync(EnginePackage package, IProgress<EngineInstallPro
+             throw new PlatformNotSupportedException(EngineDownloads.UnavailableReason(package)
+                 ?? $"The {package.Id} package is unavailable on this platform.");
+         var pending = package.Components
+-            .Where(c => !string.Equals(Marker(c), _components[c].Sha256, StringComparison.OrdinalIgnoreCase))
++            .Where(c => !string.Equals(Marker(c), MarkerOf(_components[c]), StringComparison.OrdinalIgnoreCase))
+             .Select(c => _components[c])
+             .ToList();
+-        var total = Math.Max(1, pending.Sum(c => c.Size));
++        var total = Math.Max(1, pending.Sum(TotalSize));
+         long done = 0;
+         Directory.CreateDirectory(_root);
+ 
+@@ -81,17 +87,30 @@ public async Task InstallAsync(EnginePackage package, IProgress<EngineInstallPro
+                 bytes => progress?.Report(new EngineInstallProgress(EngineInstallStage.Downloading, component.Id,
+                     Math.Min(1, (offset + bytes) / (double)total), offset + bytes, total)),
+                 cancellationToken);
++            var extras = new List<string>();
+             try
+             {
++                var extraOffset = offset + component.Size;
++                foreach (var (companion, index) in (component.Companions ?? []).Select((c, i) => (c, i)))
++                {
++                    var start = extraOffset;
++                    extras.Add(await DownloadFileAsync($"{component.Id}-{component.Version}-{index + 1}", companion.Url, companion.Sha256, component.Id,
++                        bytes => progress?.Report(new EngineInstallProgress(EngineInstallStage.Downloading, component.Id,
++                            Math.Min(1, (start + bytes) / (double)total), start + bytes, total)),
++                        cancellationToken));
++                    extraOffset += companion.Size;
++                }
+                 progress?.Report(new EngineInstallProgress(EngineInstallStage.Unpacking, component.Id,
+-                    Math.Min(1, (offset + component.Size) / (double)total), offset + component.Size, total));
+-                await UnpackAsync(component, file, cancellationToken);
++                    Math.Min(1, (offset + TotalSize(component)) / (double)total), offset + TotalSize(component), total));
++                await UnpackAsync(component, file, extras, cancellationToken);
+             }
+             finally
+             {
+                 TryDelete(file);
++                foreach (var extra in extras)
++                    TryDelete(extra);
+             }
+-            done += component.Size;
++            done += TotalSize(component);
+             _logger.LogInformation("Installed engine component {Component} {Version}", component.Id, component.Version);
+         }
+         if (pending.Count > 0)
+@@ -111,14 +130,17 @@ public void Uninstall(EnginePackage package)
+ 
+     // ───────────────────────── Download ─────────────────────────
+ 
+-    private async Task<string> DownloadAsync(EngineComponent component, Action<long> reportBytes, CancellationToken cancellationToken)
++    private Task<string> DownloadAsync(EngineComponent component, Action<long> reportBytes, CancellationToken cancellationToken) =>
++        DownloadFileAsync($"{component.Id}-{component.Version}", component.Url, component.Sha256, component.Id, reportBytes, cancellationToken);
++
++    private async Task<string> DownloadFileAsync(string name, string url, string sha256, string id, Action<long> reportBytes, CancellationToken cancellationToken)
+     {
+         var downloads = Path.Combine(_root, ".downloads");
+         Directory.CreateDirectory(downloads);
+-        var file = Path.Combine(downloads, $"{component.Id}-{component.Version}{Path.GetExtension(new Uri(component.Url).AbsolutePath)}");
++        var file = Path.Combine(downloads, $"{name}{Path.GetExtension(new Uri(url).AbsolutePath)}");
+         var partial = file + ".part";
+ 
+-        using var response = await GetFollowingRedirectsAsync(new Uri(component.Url), cancellationToken);
++        using var response = await GetFollowingRedirectsAsync(new Uri(url), cancellationToken);
+         response.EnsureSuccessStatusCode();
+         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+         await using (var source = await response.Content.ReadAsStreamAsync(cancellationToken))
+@@ -143,10 +165,10 @@ private async Task<string> DownloadAsync(EngineComponent component, Action<long>
+         }
+ 
+         var actual = Convert.ToHexString(hash.GetHashAndReset());
+-        if (!string.Equals(actual, component.Sha256, StringComparison.OrdinalIgnoreCase))
++        if (!string.Equals(actual, sha256, StringComparison.OrdinalIgnoreCase))
+         {
+             TryDelete(partial);
+-            throw new InvalidDataException($"{component.Id}: checksum mismatch (expected {component.Sha256}, got {actual}). The download was discarded.");
++            throw new InvalidDataException($"{id}: checksum mismatch (expected {sha256}, got {actual}). The download was discarded.");
+         }
+         File.Move(partial, file, overwrite: true);
+         return file;
+@@ -174,7 +196,7 @@ private async Task<HttpResponseMessage> GetFollowingRedirectsAsync(Uri url, Canc
+ 
+     // ───────────────────────── Unpack ─────────────────────────
+ 
+-    private async Task UnpackAsync(EngineComponent component, string file, CancellationToken cancellationToken)
++    private async Task UnpackAsync(EngineComponent component, string file, IReadOnlyList<string> extras, CancellationToken cancellationToken)
+     {
+         // Short name: LibreOffice's own folder structure is deep, and msiexec fails beyond MAX_PATH (260 chars).
+         var staging = Path.Combine(_root, "~" + Guid.NewGuid().ToString("N")[..6]);
+@@ -205,6 +227,16 @@ private async Task UnpackAsync(EngineComponent component, string file, Cancellat
+                     UnpackConda(file, staging, cancellationToken);
+                     Replace(component.Id, staging);
+                     break;
++                case "conda-unix":
++                    UnpackCondaUnix(component.Id, file, staging, cancellationToken);
++                    EnsureExecutablePrograms(component.Id, staging);
++                    Replace(component.Id, staging);
++                    break;
++                case "zip-programs":
++                    UnpackZipPrograms(component.Id, [file, .. extras], staging);
++                    EnsureExecutablePrograms(component.Id, staging);
++                    Replace(component.Id, staging);
++                    break;
+                 case "oxt":
+                     // LibreOffice registers bundled extensions (plain folders under share/extensions) on start-up.
+                     var extensions = Path.Combine(FolderOf("libreoffice"), "share", "extensions");
+@@ -219,7 +251,7 @@ private async Task UnpackAsync(EngineComponent component, string file, Cancellat
+                 default:
+                     throw new NotSupportedException($"Unknown engine package kind '{component.Kind}'.");
+             }
+-            File.WriteAllText(Path.Combine(FolderOf(component.Id), MarkerName), component.Sha256);
++            File.WriteAllText(Path.Combine(FolderOf(component.Id), MarkerName), MarkerOf(component));
+         }
+         finally
+         {
+@@ -415,6 +447,73 @@ internal static void UnpackConda(string condaFile, string target, CancellationTo
+             throw new InvalidDataException("The conda package contains no Windows binaries (Library/bin).");
+     }
+ 
++    /// <summary>
++    /// Unpacks the program of a conda package built for macOS: <c>bin/&lt;program&gt;</c> (Ghostscript's gs is one
++    /// self-contained program with its resources compiled in) and the package's license files, nothing else.
++    /// </summary>
++    internal static void UnpackCondaUnix(string id, string condaFile, string target, CancellationToken cancellationToken)
++    {
++        var program = EngineEnvironment.OwnCopyPrograms.TryGetValue(id, out var programs) && programs.Length == 1
++            ? EngineEnvironment.ProgramName(programs[0])
++            : throw new NotSupportedException($"No single program is defined for {id}.");
++        using var zip = ZipFile.OpenRead(condaFile);
++        Directory.CreateDirectory(target);
++        var root = Path.GetFullPath(target) + Path.DirectorySeparatorChar;
++        var found = false;
++        foreach (var payload in zip.Entries.Where(e => e.FullName.EndsWith(".tar.zst", StringComparison.Ordinal)
++                     && (e.FullName.StartsWith("pkg-", StringComparison.Ordinal) || e.FullName.StartsWith("info-", StringComparison.Ordinal))))
++        {
++            var isPackage = payload.FullName.StartsWith("pkg-", StringComparison.Ordinal);
++            using var zstd = new DecompressionStream(payload.Open(), leaveOpen: false);
++            using var tar = new TarReader(zstd);
++            while (tar.GetNextEntry() is { } entry)
++            {
++                cancellationToken.ThrowIfCancellationRequested();
++                if (entry.EntryType is not (TarEntryType.RegularFile or TarEntryType.V7RegularFile))
++                    continue;
++                var name = entry.Name.Replace('\\', '/');
++                string? relative = null;
++                if (isPackage && name == "bin/" + program)
++                {
++                    relative = program;
++                    found = true;
++                }
++                else if (!isPackage && name.StartsWith("info/licenses/", StringComparison.Ordinal))
++                    relative = "licenses/" + name["info/licenses/".Length..];
++                if (relative is null)
++                    continue;
++                var path = Path.GetFullPath(Path.Combine(target, relative));
++                if (!path.StartsWith(root, StringComparison.Ordinal))
++                    throw new InvalidDataException($"Unsafe path in conda package: {entry.Name}");
++                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
++                entry.ExtractToFile(path, overwrite: true);
++            }
++        }
++        if (!found)
++            throw new InvalidDataException($"The conda package has no bin/{program}.");
++    }
++
++    /// <summary>
++    /// Unpacks zips that each hold one program (FFmpeg and ffprobe come as separate zips of the same build) into one
++    /// folder. The programs are not touched otherwise, so a signature their maker put on them stays valid.
++    /// </summary>
++    internal static void UnpackZipPrograms(string id, IReadOnlyList<string> zips, string target)
++    {
++        Directory.CreateDirectory(target);
++        var root = Path.GetFullPath(target) + Path.DirectorySeparatorChar;
++        foreach (var file in zips)
++        {
++            using var zip = ZipFile.OpenRead(file);
++            foreach (var entry in zip.Entries.Where(e => e.Length > 0))
++            {
++                var path = Path.GetFullPath(Path.Combine(target, entry.FullName));
++                if (!path.StartsWith(root, StringComparison.Ordinal) || entry.FullName.Contains('/'))
++                    throw new InvalidDataException($"Unexpected entry in the {id} download: {entry.FullName}");
++                entry.ExtractToFile(path, overwrite: true);
++            }
++        }
++    }
++
+     /// <summary>
+     /// App-local Microsoft C++ runtime: when a package includes the "vcruntime" component, its DLLs are copied next
+     /// to the programs of the package's other conda components. Windows looks for DLLs in a program's folder before
+diff --git a/src/Filee.Engines/Infrastructure/engines.json b/src/Filee.Engines/Infrastructure/engines.json
+index 6be3c15..b85d076 100644
+--- a/src/Filee.Engines/Infrastructure/engines.json
++++ b/src/Filee.Engines/Infrastructure/engines.json
+@@ -188,6 +188,27 @@
+           "sha256": "135B8A95B8133396D54BF8E726DBC0066145EFA0D785963FC3D4592ACBFCFE5B",
+           "size": 308308875,
+           "kind": "dmg"
++        },
++        "ffmpeg": {
++          "version": "9.0.2",
++          "url": "https://ffmpeg.martin-riedl.de/download/macos/amd64/1789931006_9.0.2/ffmpeg.zip",
++          "sha256": "7C6B4125B191CBF773832DC51F424CF2B6BB7DA43007D1E066F95909E47CACD4",
++          "size": 33816391,
++          "kind": "zip-programs",
++          "companions": [
++            {
++              "url": "https://ffmpeg.martin-riedl.de/download/macos/amd64/1789931006_9.0.2/ffprobe.zip",
++              "sha256": "2322438ED2F6319A691291B247D09C69DCAA3A982460D1F269A7E1AF335CFDFD",
++              "size": 33719233
++            }
++          ]
++        },
++        "ghostscript": {
++          "version": "10.08.0",
++          "url": "https://conda.anaconda.org/conda-forge/osx-64/ghostscript-10.08.0-h6e061ac_0.conda",
++          "sha256": "BA413D84E4409855897C6C39C8AEBC1DFE901945EF6116DD28AB31C6B1041D96",
++          "size": 61219175,
++          "kind": "conda-unix"
+         }
+       }
+     },
+@@ -228,6 +249,28 @@
+           "sha256": "94BB3248DF074C225490A8A6D1D9DC87C7D6783DBB7A8E9F0D0C3D94348552AF",
+           "size": 297798926,
+           "kind": "dmg"
++        },
++        "ffmpeg": {
++          "version": "9.0.2",
++          "url": "https://ffmpeg.martin-riedl.de/download/macos/arm64/1789931890_9.0.2/ffmpeg.zip",
++          "sha256": "C8ED4C4E6978A03C485EDBFE4E0A5DC2380F8A30BBA5150531B31B094492D924",
++          "size": 28395699,
++          "kind": "zip-programs",
++          "companions": [
++            {
++              "url": "https://ffmpeg.martin-riedl.de/download/macos/arm64/1789931890_9.0.2/ffprobe.zip",
++              "sha256": "FCBE839537485EAEE7A7A8BC5CBC0F90D53617E80943E8A5B2E31CB851197EA6",
++              "size": 28317701
++            }
++          ]
++        },
++        "ghostscript": {
++          "version": "10.08.0",
++          "url": "https://conda.anaconda.org/conda-forge/osx-arm64/ghostscript-10.08.0-h61c1aad_0.conda",
++          "sha256": "2CA00E06D29B124D859C7690D892A7A122B7E87F45D455E8D6A85CF4F7916D1A",
++          "size": 60199716,
++          "kind": "conda-unix",
++          "minimumMacOS": "14.5"
+         }
+       }
+     }
+diff --git a/tests/Filee.Engines.Tests/EngineInstallerTests.cs b/tests/Filee.Engines.Tests/EngineInstallerTests.cs
+index 8faf7dd..b02e4a1 100644
+--- a/tests/Filee.Engines.Tests/EngineInstallerTests.cs
++++ b/tests/Filee.Engines.Tests/EngineInstallerTests.cs
+@@ -266,6 +266,113 @@ public void Conda_packages_cannot_write_outside_the_engine_folder()
+         Assert.False(File.Exists(Path.Combine(_root, "evil.txt")));
+     }
+ 
++    [Fact]
++    public async Task A_component_with_a_companion_downloads_both_into_one_folder_and_a_changed_companion_makes_it_outdated()
++    {
++        var main = Zip(("ffmpeg", "main"));
++        var probe = Zip(("ffprobe", "probe"));
++        var companion = new EngineCompanion("https://example.test/ffprobe.zip", Convert.ToHexString(SHA256.HashData(probe)), probe.Length);
++        var component = Component("ffmpeg", "zip-programs", main) with { Companions = [companion] };
++        var server = new FakeServer(new() { [component.Url] = main, [companion.Url] = probe });
++        var installer = Installer(server, component);
++        var package = new EnginePackage("ffmpeg", ["ffmpeg"], 1, ["ffmpeg"]);
++
++        await installer.InstallAsync(package, null, TestContext.Current.CancellationToken);
++
++        var folder = Path.Combine(_root, "ffmpeg");
++        Assert.Equal("main", File.ReadAllText(Path.Combine(folder, "ffmpeg")));
++        Assert.Equal("probe", File.ReadAllText(Path.Combine(folder, "ffprobe")));
++        Assert.True(installer.IsUpToDate(package));
++        Assert.Empty(Directory.GetFiles(Path.Combine(_root, ".downloads")));
++
++        // The same main file with a different companion is a different install: the marker covers both.
++        var other = Zip(("ffprobe", "newer"));
++        var changed = component with { Companions = [new EngineCompanion(companion.Url, Convert.ToHexString(SHA256.HashData(other)), other.Length)] };
++        Assert.False(Installer(server, changed).IsUpToDate(package));
++    }
++
++    [Fact]
++    public async Task A_companion_with_the_wrong_checksum_rejects_the_whole_install()
++    {
++        var main = Zip(("ffmpeg", "main"));
++        var probe = Zip(("ffprobe", "probe"));
++        var companion = new EngineCompanion("https://example.test/ffprobe.zip", new string('0', 64), probe.Length);
++        var component = Component("ffmpeg", "zip-programs", main) with { Companions = [companion] };
++        var installer = Installer(new FakeServer(new() { [component.Url] = main, [companion.Url] = probe }), component);
++        var package = new EnginePackage("ffmpeg", ["ffmpeg"], 1, ["ffmpeg"]);
++
++        var error = await Assert.ThrowsAsync<InvalidDataException>(() => installer.InstallAsync(package, null, TestContext.Current.CancellationToken));
++
++        Assert.Contains("checksum", error.Message);
++        Assert.False(installer.IsInstalled(package));
++        Assert.False(Directory.Exists(Path.Combine(_root, "ffmpeg")));
++        Assert.Empty(Directory.GetFiles(Path.Combine(_root, ".downloads")));
++    }
++
++    [Fact]
++    public void Zip_programs_must_be_plain_files_in_the_top_folder()
++    {
++        Directory.CreateDirectory(_root);
++        var file = Path.Combine(_root, "evil.zip");
++        File.WriteAllBytes(file, Zip(("../evil.txt", "evil")));
++        Assert.Throws<InvalidDataException>(() => EngineInstaller.UnpackZipPrograms("ffmpeg", [file], Path.Combine(_root, "target")));
++        Assert.False(File.Exists(Path.Combine(_root, "evil.txt")));
++
++        File.WriteAllBytes(file, Zip(("sub/ffmpeg", "nested")));
++        Assert.Throws<InvalidDataException>(() => EngineInstaller.UnpackZipPrograms("ffmpeg", [file], Path.Combine(_root, "target")));
++    }
++
++    [Fact]
++    public void A_Mac_conda_package_gives_only_its_program_and_licenses()
++    {
++        var program = EngineEnvironment.ProgramName(EngineEnvironment.OwnCopyPrograms["ghostscript"][0]);
++        Directory.CreateDirectory(_root);
++        var file = Path.Combine(_root, "gs.conda");
++        File.WriteAllBytes(file, CondaWithInfo(
++            pkg: [($"bin/{program}", "gs"), ("bin/gsx", "other"), ("lib/libgs.dylib", "lib"), ("share/ghostscript/doc.txt", "doc")],
++            info: [("info/licenses/LICENSE", "AGPL"), ("info/index.json", "{}")]));
++
++        var target = Path.Combine(_root, "gs");
++        EngineInstaller.UnpackCondaUnix("ghostscript", file, target, CancellationToken.None);
++
++        var files = Directory.EnumerateFiles(target, "*", SearchOption.AllDirectories)
++            .Select(f => Path.GetRelativePath(target, f).Replace('\\', '/')).Order(StringComparer.Ordinal).ToList();
++        Assert.Equal([program, "licenses/LICENSE"], files);
++        Assert.Equal("gs", File.ReadAllText(Path.Combine(target, program)));
++
++        // A package without the program is not an engine.
++        File.WriteAllBytes(file, CondaWithInfo(pkg: [("bin/other", "x")], info: [("info/index.json", "{}")]));
++        Assert.Throws<InvalidDataException>(() => EngineInstaller.UnpackCondaUnix("ghostscript", file, Path.Combine(_root, "gs2"), CancellationToken.None));
++    }
++
++    /// <summary>A conda package as conda-forge builds it: the files in <c>pkg-*.tar.zst</c>, the metadata in <c>info-*.tar.zst</c>.</summary>
++    private static byte[] CondaWithInfo((string Path, string Text)[] pkg, (string Path, string Text)[] info)
++    {
++        static byte[] Tarball((string Path, string Text)[] files)
++        {
++            using var tarball = new MemoryStream();
++            using (var zstd = new CompressionStream(tarball, level: 3, leaveOpen: true))
++            using (var tar = new TarWriter(zstd, TarEntryFormat.Pax, leaveOpen: true))
++            {
++                foreach (var (path, text) in files)
++                    tar.WriteEntry(new PaxTarEntry(TarEntryType.RegularFile, path) { DataStream = new MemoryStream(Encoding.UTF8.GetBytes(text)) });
++            }
++            return tarball.ToArray();
++        }
++
++        using var buffer = new MemoryStream();
++        using (var zip = new ZipArchive(buffer, ZipArchiveMode.Create, leaveOpen: true))
++        {
++            using (var writer = new StreamWriter(zip.CreateEntry("metadata.json").Open()))
++                writer.Write("{\"conda_pkg_format_version\": 2}");
++            using (var entry = zip.CreateEntry("pkg-tool-1.0-0.tar.zst").Open())
++                entry.Write(Tarball(pkg));
++            using (var entry = zip.CreateEntry("info-tool-1.0-0.tar.zst").Open())
++                entry.Write(Tarball(info));
++        }
++        return buffer.ToArray();
++    }
++
+     [Fact]
+     public async Task LibreOffice_extensions_go_into_the_installed_LibreOffice_and_need_it()
+     {
+diff --git a/tests/Filee.Engines.Tests/PortableEngineTests.cs b/tests/Filee.Engines.Tests/PortableEngineTests.cs
+index 8903c05..219dc32 100644
+--- a/tests/Filee.Engines.Tests/PortableEngineTests.cs
++++ b/tests/Filee.Engines.Tests/PortableEngineTests.cs
+@@ -24,7 +24,15 @@ public void Unix_downloads_are_pinned_for_the_requested_runtime(string runtime)
+         Assert.Contains("pandoc", components.Keys);
+         Assert.Contains("calibre", components.Keys);
+         Assert.DoesNotContain("vcruntime", components.Keys);
+-        Assert.DoesNotContain("ghostscript", components.Keys);
++        // Ghostscript and FFmpeg are downloaded on macOS only (Linux has FFmpeg from its own pin, and no Ghostscript).
++        if (runtime.StartsWith("osx", StringComparison.Ordinal))
++        {
++            Assert.Equal("conda-unix", components["ghostscript"].Kind);
++            Assert.Equal("zip-programs", components["ffmpeg"].Kind);
++            Assert.Single(components["ffmpeg"].Companions!);
++        }
++        else
++            Assert.DoesNotContain("ghostscript", components.Keys);
+         foreach (var component in components.Values)
+         {
+             Assert.StartsWith("https://", component.Url);

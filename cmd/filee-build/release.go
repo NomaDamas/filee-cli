@@ -10,19 +10,19 @@ import (
 
 const notesTemplate = "# filee-cli %[1]s\n\n" +
 	"**Unofficial redistribution** of the command line of [Filee](%[2]s) %[3]s (MIT). Not made or endorsed by the\n" +
-	"Filee author. Built from the unmodified upstream source at commit `%[4]s`; the program that builds these packages is\n" +
-	"in this repository. No GUI, tray, Explorer menu or installer is included.\n\n" +
+	"Filee author. Built from the upstream source at commit `%[4]s` plus the patches in `patches/` (`UPSTREAM.md` lists them);\n" +
+	"the program that builds these packages is in this repository. No GUI, tray, Explorer menu or installer is included.\n\n" +
 	"| Asset | SHA-256 |\n|---|---|\n%[5]s\n\n" +
 	"Verify a download (`SHA256SUMS` is in this release):\n\n" +
 	"```sh\nsha256sum --check --ignore-missing SHA256SUMS      # Linux\nshasum -a 256 --check --ignore-missing SHA256SUMS  # macOS\n```\n\n" +
 	"```powershell\n(Get-FileHash .\\filee-cli-%[1]s-win-x64.zip -Algorithm SHA256).Hash.ToLower()   # compare with the table\n```\n\n" +
 	"Each archive has one top-level folder `filee-cli-%[1]s-<rid>/` with `filee-cli` (`filee-cli.exe` on Windows),\n" +
-	"`engines/` (rhwp, 7-Zip and the bundled third-party engines of that platform), `LICENSE`, `THIRD-PARTY-NOTICES.md` and\n" +
-	"`UPSTREAM.md`. The `filee-cli-%[1]s-source-<engine>.tar.gz` assets are the Corresponding Source of the bundled\n" +
-	"GPL/LGPL/AGPL engines (each has a `SOURCES.md` with the written offer; a file split into `.partNN` pieces is joined with\n" +
-	"`cat <name>.part* > <name>`). Licenses of every component are in `THIRD-PARTY-NOTICES.md`.\n%[6]s"
+	"`engines/` (rhwp and 7-Zip), `LICENSE`, `THIRD-PARTY-NOTICES.md` and `UPSTREAM.md`. Conversion engines (FFmpeg,\n" +
+	"Pandoc, calibre, Ghostscript, LibreOffice) are not in the packages: `filee-cli` downloads the vendor's own copy, checked\n" +
+	"against a pinned SHA-256, the first time a conversion needs one (`filee-cli engines list`). Licenses of every component\n" +
+	"are in `THIRD-PARTY-NOTICES.md`.\n%[6]s"
 
-// cmdRelease writes SHA256SUMS and RELEASE_NOTES.md for exactly the five packages and the hosted source archives, failing on a missing or extra file or a
+// cmdRelease writes SHA256SUMS and RELEASE_NOTES.md for exactly the five packages, failing on a missing or extra file or a
 // tag that is not v<upstream version>-<revision>.
 func cmdRelease(args []string) error {
 	fl := newFlags("release")
@@ -42,21 +42,12 @@ func cmdRelease(args []string) error {
 	if *tag != "" && *tag != "v"+up.Version {
 		return fmt.Errorf("tag %s does not match UPSTREAM (expected v%s)", *tag, up.Version)
 	}
-	hosted, err := hostedSourceEngines()
-	if err != nil {
-		return err
-	}
-	// The assets: five packages, and the Corresponding Source of every engine whose license requires hosting it
-	// (a source archive that had to be split is accepted as its .partNN pieces).
+	// The assets: exactly the five packages.
 	expected := map[string]bool{}
 	var order []string
 	for _, rid := range rids {
 		expected[archiveName(up, rid)] = true
 		order = append(order, archiveName(up, rid))
-	}
-	sourceNames := map[string]bool{}
-	for _, id := range hosted {
-		sourceNames[sourceArchiveName(up, id)] = true
 	}
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -69,31 +60,6 @@ func cmdRelease(args []string) error {
 			continue
 		}
 		present[n] = true
-	}
-	for _, id := range hosted {
-		whole := sourceArchiveName(up, id)
-		var parts []string
-		for n := range present {
-			if strings.HasPrefix(n, whole+".part") {
-				parts = append(parts, n)
-			}
-		}
-		sort.Strings(parts)
-		switch {
-		case present[whole] && len(parts) > 0:
-			return fmt.Errorf("%s is present both whole and in parts", whole)
-		case present[whole]:
-			expected[whole] = true
-			order = append(order, whole)
-		case len(parts) > 0:
-			for _, p := range parts {
-				expected[p] = true
-				order = append(order, p)
-			}
-		default:
-			expected[whole] = true // reported as missing
-			order = append(order, whole)
-		}
 	}
 	var missing, extra []string
 	for n := range expected {
@@ -109,7 +75,7 @@ func cmdRelease(args []string) error {
 	sort.Strings(missing)
 	sort.Strings(extra)
 	if len(missing) > 0 || len(extra) > 0 {
-		return fmt.Errorf("release assets differ from the expected set (%d packages + source archives of %s). missing: %v; unexpected: %v", len(rids), strings.Join(hosted, ", "), missing, extra)
+		return fmt.Errorf("release assets differ from the expected set (%d packages). missing: %v; unexpected: %v", len(rids), missing, extra)
 	}
 	var sums, rows strings.Builder
 	for _, name := range order {

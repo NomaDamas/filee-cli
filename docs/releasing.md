@@ -45,11 +45,11 @@ creates the tag, pushes it, creates a **draft** release with the five archives a
 
 | Workflow | Trigger | Does |
 |---|---|---|
-| `ci.yml` → `build.yml` | pull requests, or by hand (`gh workflow run ci.yml`) | builds the five packages with `filee-build` and the Corresponding Source archives, smoke-tests each package (Linux inside a clean `ubuntu:22.04` container), checks glibc, uploads artifacts |
-| `release.yml` | by hand on a tag (`gh workflow run release.yml --ref v2.0.0-1`) | the same build, then, only if every job passes: `SHA256SUMS`, release notes, provenance attestation, GitHub release with the five packages and the source archives |
+| `ci.yml` → `build.yml` | pull requests, or by hand (`gh workflow run ci.yml`) | builds the five packages with `filee-build`, smoke-tests each package (engines are downloaded on demand from the vendors) (Linux inside a clean `ubuntu:22.04` container), checks glibc, uploads artifacts |
+| `release.yml` | by hand on a tag (`gh workflow run release.yml --ref v2.0.0-1`) | the same build, then, only if every job passes: `SHA256SUMS`, release notes, provenance attestation, GitHub release with the five packages |
 
-A build takes about 15 to 20 minutes and downloads about 9 GB of engine sources; the `engine sources` job frees disk
-space first because a stock runner has little. Actions are pinned to commit SHAs (comments name the version).
+A build takes a few minutes; the smoke test downloads FFmpeg, Pandoc and (macOS, Windows) Ghostscript, about 150 MB.
+calibre and LibreOffice (about 650 MB) are checked on demand by hand, not on every build. Actions are pinned to commit SHAs (comments name the version).
 
 To release: update `UPSTREAM` (docs/updating.md), push to `main`, create the annotated tag `v<version>-<revision>` on that
 commit, push the tag, run `release.yml` on it. A tag that never got a release can be moved; a published one must not be.

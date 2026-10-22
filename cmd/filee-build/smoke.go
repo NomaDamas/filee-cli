@@ -3,7 +3,6 @@ package main
 import (
 	"archive/zip"
 	"bytes"
-	"context"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -176,23 +175,41 @@ func cmdSmoke(args []string) error {
 	if _, err := s.run(2, "convert", filepath.Join(work, "nothing-to-do"), "--to", "pdf"); err != nil {
 		return err
 	}
-	if err := smokeEngines(s, pkg, kind == "zip"); err != nil {
+	if err := smokeEngines(s, pkg, name, kind == "zip"); err != nil {
 		return err
 	}
 	fmt.Println("smoke test passed:", base)
 	return nil
 }
 
-type smoke struct{ exe, work string }
+type smoke struct {
+	exe, work string
+	env       []string // extra environment for filee-cli (nil: inherit)
+}
 
+// run returns the standard output of filee-cli.
 func (s *smoke) run(expect int, args ...string) (string, error) {
+	out, _, err := s.runSplit(expect, args...)
+	return out, err
+}
+
+// runBoth returns standard output and error together.
+func (s *smoke) runBoth(expect int, args ...string) (string, error) {
+	out, errOut, err := s.runSplit(expect, args...)
+	return out + errOut, err
+}
+
+func (s *smoke) runSplit(expect int, args ...string) (string, string, error) {
 	cmd := exec.Command(s.exe, args...)
 	cmd.Dir = s.work
+	if s.env != nil {
+		cmd.Env = append(os.Environ(), s.env...)
+	}
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	done := make(chan error, 1)
 	if err := cmd.Start(); err != nil {
-		return "", err
+		return "", "", err
 	}
 	go func() { done <- cmd.Wait() }()
 	var err error
@@ -200,18 +217,18 @@ func (s *smoke) run(expect int, args ...string) (string, error) {
 	case err = <-done:
 	case <-time.After(5 * time.Minute):
 		cmd.Process.Kill()
-		return "", fmt.Errorf("filee-cli %s: timed out", strings.Join(args, " "))
+		return "", "", fmt.Errorf("filee-cli %s: timed out", strings.Join(args, " "))
 	}
 	code := 0
 	if ee, ok := err.(*exec.ExitError); ok {
 		code = ee.ExitCode()
 	} else if err != nil {
-		return "", err
+		return "", "", err
 	}
 	if code != expect {
-		return "", fmt.Errorf("filee-cli %s: exit %d, expected %d\nstdout: %s\nstderr: %s", strings.Join(args, " "), code, expect, stdout.String(), stderr.String())
+		return "", "", fmt.Errorf("filee-cli %s: exit %d, expected %d\nstdout: %s\nstderr: %s", strings.Join(args, " "), code, expect, stdout.String(), stderr.String())
 	}
-	return stdout.String(), nil
+	return stdout.String(), stderr.String(), nil
 }
 
 type convertResult struct {
@@ -265,107 +282,142 @@ func zipMember(data []byte, name string) ([]byte, error) {
 	return nil, fmt.Errorf("no %s in the archive", name)
 }
 
-// engineVersionFlags: how each bundled program reports its version (proves the vendor binary starts on this platform).
-var engineVersionFlags = map[string][]string{
-	"pandoc": {"--version"}, "ffmpeg": {"-version"}, "calibre": {"--version"}, "ghostscript": {"--version"},
-	// soffice's own --version hangs on Windows (the launcher waits for a first-start dialog); Filee only runs it headless,
-	// and the ODT -> DOC conversion below starts it that way.
-	"libreoffice": nil,
-}
-
-// smokeEngines starts every bundled engine program, then runs one conversion that only that engine can do (Filee uses
-// its own copy before anything on the PATH, so a bundled engine that is broken or missing shows up as a failure here).
-func smokeEngines(s *smoke, pkg string, windows bool) error {
-	have := map[string]string{}
-	for _, id := range sortedKeys(engineVersionFlags) {
-		root := filepath.Join(pkg, "engines", id)
-		if _, err := os.Stat(root); err != nil {
-			continue
-		}
-		folder := programFolder(id, root, windows)
-		if folder == "" {
-			return fmt.Errorf("engines/%s is in the package but its programs are not where Filee looks", id)
-		}
-		if engineVersionFlags[id] == nil {
-			have[id] = "present"
-			continue
-		}
-		program := filepath.Join(folder, requiredPrograms(id, windows)[0])
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-		out, err := exec.CommandContext(ctx, program, engineVersionFlags[id]...).CombinedOutput()
-		cancel()
-		if err != nil {
-			return fmt.Errorf("engines/%s: %s %s: %v\n%s", id, filepath.Base(program), strings.Join(engineVersionFlags[id], " "), err, out)
-		}
-		have[id] = strings.TrimSpace(strings.SplitN(string(out), "\n", 2)[0])
-		fmt.Printf("engine %s starts: %s\n", id, have[id])
+// smokeEngines proves the packages hold no conversion engine except rhwp and 7-Zip, then converts the way a user
+// does: with a PATH that has no engines and an empty data folder, so every engine is downloaded on demand (SHA-256
+// checked by filee-cli) and one conversion only that engine can do runs. calibre and LibreOffice (about 650 MB together)
+// are not downloaded here; `filee-cli engines list` must still offer them.
+func smokeEngines(s *smoke, pkg, name string, windows bool) error {
+	entries, err := os.ReadDir(filepath.Join(pkg, "engines"))
+	if err != nil {
+		return err
 	}
+	for _, e := range entries {
+		if e.Name() != "rhwp" && e.Name() != "7zip" {
+			return fmt.Errorf("engines/%s is in the package; only rhwp and 7zip belong there (the rest are downloaded on demand)", e.Name())
+		}
+	}
+	data, err := os.MkdirTemp("", "filee-smoke-data-")
+	if err != nil {
+		return err
+	}
+	defer rmtree(data)
+	cleanPath := "/usr/bin:/bin"
+	if windows {
+		root := os.Getenv("SystemRoot")
+		if root == "" {
+			root = `C:\Windows`
+		}
+		cleanPath = filepath.Join(root, "System32") + ";" + root
+	}
+	s.env = []string{"FILEE_DATA_DIR=" + data, "PATH=" + cleanPath}
+	defer func() { s.env = nil }()
 	failed := func(source, target, why string) error { return fmt.Errorf("%s -> %s: %s", source, target, why) }
-	if have["pandoc"] != "" {
-		// Only Pandoc writes PowerPoint from Markdown.
-		data, err := s.convert("doc.md", "pptx", "doc.pptx")
-		if err != nil {
-			return err
+	downloads := func(id string) bool {
+		switch id {
+		case "ghostscript", "libreoffice":
+			return !strings.Contains(name, "linux")
 		}
-		if _, err := zipMember(data, "ppt/presentation.xml"); err != nil {
-			return failed("doc.md", "pptx", err.Error())
-		}
-		fmt.Println("MD -> PPTX (Pandoc) ok")
+		return true
 	}
-	if have["calibre"] != "" {
-		if _, err := s.convert("doc.md", "epub", "doc.epub"); err != nil {
-			return err
-		}
-		mobi, err := s.convert("doc.epub", "mobi", "doc.mobi")
-		if err != nil {
-			return err
-		}
-		if len(mobi) < 68 || string(mobi[60:68]) != "BOOKMOBI" {
-			return failed("doc.epub", "mobi", "not a MOBI file")
-		}
-		fmt.Println("EPUB -> MOBI (calibre) ok")
+
+	onPC := map[string]bool{}
+	list, err := s.run(0, "engines", "list")
+	if err != nil {
+		return err
 	}
-	if have["libreoffice"] != "" {
-		if _, err := s.convert("doc.md", "odt", "doc.odt"); err != nil {
-			return err
+	for _, id := range []string{"libreoffice", "pandoc", "ghostscript", "ffmpeg", "calibre"} {
+		if !downloads(id) {
+			continue
 		}
-		doc, err := s.convert("doc.odt", "doc", "doc.doc")
-		if err != nil {
-			return err
+		line := ""
+		for _, l := range strings.Split(list, "\n") {
+			if strings.HasPrefix(l, id+" ") {
+				line = l
+			}
 		}
-		if !bytes.HasPrefix(doc, []byte{0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1}) {
-			return failed("doc.odt", "doc", "not an OLE2 Word file")
+		if line == "" {
+			return fmt.Errorf("engines list does not offer %s", id)
 		}
-		fmt.Println("ODT -> DOC (LibreOffice) ok")
+		if strings.Contains(line, "installed (older") {
+			return fmt.Errorf("engines list: %s is installed in an empty data folder: %q", id, line)
+		}
+		onPC[id] = !strings.Contains(line, "not installed")
 	}
-	if have["ffmpeg"] != "" {
-		var pcm bytes.Buffer
-		for i := 0; i < 8000; i++ {
-			binary.Write(&pcm, binary.LittleEndian, int16(8000*math.Sin(float64(i)/10)))
+	fmt.Println("engines list offers every engine of this platform ok")
+
+	// A developer machine may have engines (Homebrew, an installed LibreOffice); Filee finds those even with a clean
+	// PATH. Then the download is requested by name (that installs Filee's own copy, which is used before the PC's);
+	// otherwise the conversion itself must download it.
+	prepare := func(id string) error {
+		if !onPC[id] {
+			return nil
 		}
-		var wav bytes.Buffer
-		wav.WriteString("RIFF")
-		binary.Write(&wav, binary.LittleEndian, uint32(36+pcm.Len()))
-		wav.WriteString("WAVEfmt ")
-		for _, v := range []any{uint32(16), uint16(1), uint16(1), uint32(8000), uint32(16000), uint16(2), uint16(16)} {
-			binary.Write(&wav, binary.LittleEndian, v)
-		}
-		wav.WriteString("data")
-		binary.Write(&wav, binary.LittleEndian, uint32(pcm.Len()))
-		wav.Write(pcm.Bytes())
-		if err := os.WriteFile(filepath.Join(s.work, "tone.wav"), wav.Bytes(), 0o644); err != nil {
-			return err
-		}
-		mp3, err := s.convert("tone.wav", "mp3", "tone.mp3")
-		if err != nil {
-			return err
-		}
-		if !(bytes.HasPrefix(mp3, []byte("ID3")) || (len(mp3) > 2 && mp3[0] == 0xff && mp3[1]&0xe0 == 0xe0)) {
-			return failed("tone.wav", "mp3", "not an MP3 file")
-		}
-		fmt.Println("WAV -> MP3 (FFmpeg) ok")
+		_, err := s.run(0, "engines", "install", id)
+		return err
 	}
-	if have["ghostscript"] != "" {
+	// --no-install: with the engine missing the conversion fails and names it; nothing is downloaded.
+	if !onPC["pandoc"] {
+		if _, err := s.run(1, "convert", "doc.md", "--to", "pptx", "--no-install", "--overwrite"); err != nil {
+			return err
+		}
+		if _, err := os.Stat(filepath.Join(data, "engines", "pandoc")); err == nil {
+			return fmt.Errorf("--no-install downloaded pandoc")
+		}
+	}
+	for _, id := range []string{"pandoc", "ffmpeg", "ghostscript"} {
+		if downloads(id) {
+			if err := prepare(id); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Pandoc: only it writes PowerPoint from Markdown. The first conversion downloads it; the second must not.
+	out, err := s.convert("doc.md", "pptx", "doc.pptx")
+	if err != nil {
+		return err
+	}
+	if _, err := zipMember(out, "ppt/presentation.xml"); err != nil {
+		return failed("doc.md", "pptx", err.Error())
+	}
+	fmt.Println("MD -> PPTX (Pandoc, downloaded on demand) ok")
+	again, err := s.runBoth(0, "convert", "doc.md", "--to", "pptx", "--overwrite")
+	if err != nil {
+		return err
+	}
+	if strings.Contains(again, "installing") {
+		return fmt.Errorf("pandoc was downloaded a second time")
+	}
+
+	// FFmpeg.
+	var pcm bytes.Buffer
+	for i := 0; i < 8000; i++ {
+		binary.Write(&pcm, binary.LittleEndian, int16(8000*math.Sin(float64(i)/10)))
+	}
+	var wav bytes.Buffer
+	wav.WriteString("RIFF")
+	binary.Write(&wav, binary.LittleEndian, uint32(36+pcm.Len()))
+	wav.WriteString("WAVEfmt ")
+	for _, v := range []any{uint32(16), uint16(1), uint16(1), uint32(8000), uint32(16000), uint16(2), uint16(16)} {
+		binary.Write(&wav, binary.LittleEndian, v)
+	}
+	wav.WriteString("data")
+	binary.Write(&wav, binary.LittleEndian, uint32(pcm.Len()))
+	wav.Write(pcm.Bytes())
+	if err := os.WriteFile(filepath.Join(s.work, "tone.wav"), wav.Bytes(), 0o644); err != nil {
+		return err
+	}
+	mp3, err := s.convert("tone.wav", "mp3", "tone.mp3")
+	if err != nil {
+		return err
+	}
+	if !(bytes.HasPrefix(mp3, []byte("ID3")) || (len(mp3) > 2 && mp3[0] == 0xff && mp3[1]&0xe0 == 0xe0)) {
+		return failed("tone.wav", "mp3", "not an MP3 file")
+	}
+	fmt.Println("WAV -> MP3 (FFmpeg, downloaded on demand) ok")
+
+	// Ghostscript, where Filee offers a download for the platform.
+	if downloads("ghostscript") {
 		ps := "%!PS\n/Helvetica findfont 24 scalefont setfont 72 700 moveto (Filee) show showpage\n"
 		if err := os.WriteFile(filepath.Join(s.work, "page.ps"), []byte(ps), 0o644); err != nil {
 			return err
@@ -377,7 +429,29 @@ func smokeEngines(s *smoke, pkg string, windows bool) error {
 		if !bytes.HasPrefix(pdf, []byte("%PDF-")) {
 			return failed("page.ps", "pdf", "not a PDF")
 		}
-		fmt.Println("PS -> PDF (Ghostscript) ok")
+		fmt.Println("PS -> PDF (Ghostscript, downloaded on demand) ok")
+	}
+
+	list, err = s.run(0, "engines", "list")
+	if err != nil {
+		return err
+	}
+	for _, id := range []string{"pandoc", "ffmpeg", "ghostscript"} {
+		if !downloads(id) {
+			continue
+		}
+		for _, l := range strings.Split(list, "\n") {
+			if strings.HasPrefix(l, id+" ") && !strings.Contains(l, " installed ") {
+				return fmt.Errorf("after the conversions engines list says: %q (expected installed)", l)
+			}
+		}
+	}
+	// remove deletes only what filee-cli installed.
+	if _, err := s.run(0, "engines", "remove", "pandoc"); err != nil {
+		return err
+	}
+	if _, err := os.Stat(filepath.Join(data, "engines", "pandoc")); err == nil {
+		return fmt.Errorf("engines remove left pandoc behind")
 	}
 	return nil
 }

@@ -288,11 +288,6 @@ func addEngines(rid, pkg, rhwpDir, scratch string) (EnginesInfo, error) {
 	}
 	info.SevenZip.URL, info.SevenZip.Sha256 = z.URL, z.Sha256
 
-	info.Bundled, err = installEngines(rid, engines, scratch)
-	if err != nil {
-		return info, err
-	}
-
 	if !windows {
 		for _, p := range []string{program, filepath.Join(zipTarget, "7zz"), filepath.Join(pkg, "filee-cli")} {
 			if err := os.Chmod(p, 0o755); err != nil {
@@ -320,14 +315,6 @@ func isMachO(p string) bool {
 	return false
 }
 
-// vendorSigned: the application bundles of calibre and LibreOffice keep the vendor's own signature, which signing a
-// single file inside would break; so do ffmpeg and ffprobe, which Martin Riedl signs with his Developer ID (the files
-// stay byte-identical to the pinned downloads).
-func vendorSigned(rel string) bool {
-	return strings.HasPrefix(rel, "engines/calibre/") || strings.HasPrefix(rel, "engines/libreoffice/") ||
-		rel == "engines/ffmpeg/ffmpeg" || rel == "engines/ffmpeg/ffprobe"
-}
-
 // codesignMacOS signs every Mach-O file (the main program last) and verifies the program.
 func codesignMacOS(pkg, identity string) error {
 	options := []string{"--force", "--sign", identity}
@@ -343,7 +330,7 @@ func codesignMacOS(pkg, identity string) error {
 	main := filepath.Join(pkg, "filee-cli")
 	for _, rel := range files {
 		p := filepath.Join(pkg, filepath.FromSlash(rel))
-		if p == main || !isMachO(p) || vendorSigned(rel) {
+		if p == main || !isMachO(p) {
 			continue
 		}
 		if _, err := run(runOpts{Quiet: true}, "codesign", append(append([]string{}, options...), "--entitlements", entitlements, p)...); err != nil {

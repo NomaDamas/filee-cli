@@ -95,20 +95,6 @@ func cmdLocal(args []string) error {
 			return err
 		}
 	}
-	// Corresponding Source of the bundled GPL/LGPL/AGPL engines: built (or reused) next to the packages.
-	if err := verifySources(); err != nil {
-		return err
-	}
-	sourcesDir := filepath.Join(distAbs, "sources")
-	if err := cmdSources([]string{"--dist", sourcesDir}); err != nil {
-		return err
-	}
-	srcFiles, _ := filepath.Glob(filepath.Join(sourcesDir, "filee-cli-*-source-*"))
-	for _, f := range srcFiles {
-		if err := copyFile(f, filepath.Join(releaseDir, filepath.Base(f))); err != nil {
-			return err
-		}
-	}
 	fmt.Println("\n=== release files ===")
 	if err := cmdRelease([]string{releaseDir, "--tag", tag}); err != nil {
 		return err

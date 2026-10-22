@@ -31,13 +31,13 @@ filee-cli convert photo.heic --to jpg
 filee-cli convert *.png --to webp -q 80 -o out
 ```
 
-The download is about 0.6 to 1 GB because the conversion engines are in it (the largest are calibre and LibreOffice).
-Both package managers check its SHA-256. Homebrew keeps the archive in the Cellar and unpacks it after its own
-install steps, so the vendors' signed engines stay byte-identical.
+The download is about 85 MB (macOS Apple silicon; CI sizes for the others are in the release table). The conversion engines (FFmpeg, Pandoc, calibre, Ghostscript, LibreOffice) are **not in the package**: the first
+conversion that needs one downloads the vendor's copy, checked against a pinned SHA-256 (see "Engines" below).
+Both package managers check the package's SHA-256.
 
 ## Download and verify
 
-Releases have five archives, six source archives (the Corresponding Source of the bundled engines) and one `SHA256SUMS`:
+Releases have five archives and one `SHA256SUMS`:
 
 | Platform | Asset |
 |---|---|
@@ -85,7 +85,8 @@ convert. Put the folder on `PATH`, or link `filee-cli` into a directory that is.
 
 Callers should run it as a **separate process** (it is a self-contained .NET program with its own native libraries).
 It does not need a display. The `engines/` folder must stay next to the program. Linux needs the libraries .NET itself
-needs; see the package's `README.md`.
+needs; see the package's `README.md`. Engines are downloaded to the user's `filee` data folder (`FILEE_DATA_DIR`
+moves it); progress and the "installing ..." lines go to **stderr**, so `--json` output on stdout stays clean.
 
 Several `filee-cli` processes at the same time share one LibreOffice profile folder, which LibreOffice does not allow
 ([#2](https://github.com/NomaDamas/filee-cli/issues/2)): give each process its own `FILEE_DATA_DIR`, or pass all files
@@ -98,60 +99,58 @@ to one `filee-cli convert` (that parallelises safely).
 | `filee-cli`, `*.dll`/`*.so`/`*.dylib`, `filee-cli.deps.json` | the program, the .NET runtime and native libraries |
 | `engines/rhwp/` | rhwp (MIT), HWP/HWPX → PDF. Linux builds are compiled from source on Ubuntu 22.04 |
 | `engines/7zip/` | 7-Zip (LGPL-2.1+, unRAR restriction on the RAR code), archives |
-| `engines/pandoc/`, `engines/calibre/`, `engines/libreoffice/` (macOS, Windows), `engines/ffmpeg/`, `engines/ghostscript/` (macOS, Windows), `engines/h2orestart` + `engines/jre/` (Windows) | the vendors' own unmodified binaries, see below |
 | `LICENSE`, `THIRD-PARTY-NOTICES.md`, `licenses/` | licenses, generated from the package contents |
 | `UPSTREAM.md` | upstream URL, tag, commit, patches, build date, SDK |
 
-### Bundled engines (GPL, LGPL, AGPL and others) and their source
+### Engines (GPL, LGPL, AGPL and others), downloaded on demand
 
 Filee itself is MIT and calls these engines as **separate programs** (`filee-cli` starts them with command-line
-arguments and links none of their code). Each package carries the engines Filee offers on that platform, exactly the
-files upstream's `engines.json` pins (same URL and SHA-256), with three exceptions where this repository ships another
-build of the **same release** because the pinned one does not exist or has no published build scripts:
+arguments and links none of their code). The packages carry only rhwp and 7-Zip. For everything else `filee-cli`
+does what the Filee app does in *Settings → Engines*: before a conversion it works out which engine the files need,
+downloads it from the vendor's own location, checks the **SHA-256 pinned in Filee's `engines.json`**, and goes on.
+A download that does not match is discarded and nothing is installed.
 
-- FFmpeg on Windows: upstream pins a Gyan.dev build whose scripts are not published; the BtbN GPL build is shipped.
-- FFmpeg on macOS: Filee has no macOS download (it looks for one on the `PATH`); the packages carry
-  [Martin Riedl's](https://ffmpeg.martin-riedl.de) GPL build 9.0.2 (Developer-ID signed by him, signature kept), whose
-  build scripts and all 31 dependencies are pinned.
-- Ghostscript on macOS: likewise no download upstream; the packages carry conda-forge's `gs` 10.08.0, built from the
-  same feedstock commit as the Windows package upstream pins.
+```sh
+filee-cli engines list                   # what each engine is for, its size, and whether it is installed
+filee-cli engines install ffmpeg         # get one ahead of time (before going offline); "all" gets every one
+filee-cli engines remove calibre         # delete the copy filee-cli downloaded
+filee-cli convert clip.mp4 --to mp3      # downloads FFmpeg first (on stderr), then converts
+filee-cli convert a.md --to pdf --no-install   # never download: a missing engine fails the file and names it
+```
 
-Each engine keeps its license; the full list with versions, SHA-256 and licenses is in the package's
-`THIRD-PARTY-NOTICES.md`.
-
-| Engine | Where | License | Source |
+| Engine | Used for | Download | License |
 |---|---|---|---|
-| Pandoc 3.12 | all | GPL-2.0-or-later | hosted: `filee-cli-<version>-source-pandoc.tar.gz` |
-| FFmpeg 9.0.2 (BtbN build; Martin Riedl build on macOS) | all | GPL-3.0-or-later | hosted: `…-source-ffmpeg.tar.gz` |
-| calibre 9.15.0 | all | GPL-3.0 | hosted: `…-source-calibre.tar.gz` |
-| Ghostscript 10.08 | macOS, Windows | AGPL-3.0 | hosted: `…-source-ghostscript.tar.gz` |
-| H2Orestart 0.7.14, Eclipse Temurin JRE 21 | Windows | GPL-3.0; GPL-2.0 + Classpath exception | hosted: `…-source-h2orestart.tar.gz`, `…-source-jre.tar.gz` |
-| LibreOffice 26.2.6 | macOS, Windows | MPL-2.0 (+ LGPL/GPL parts) | TDF's own source release, URL and SHA-256 in the notices |
-| Microsoft VC++ runtime | Windows | proprietary redistributable | none exists |
+| FFmpeg 9.0.2 | video, audio, Live Photo, HEIC writing | 33 to 56 MB | GPL-3.0-or-later |
+| Pandoc 3.12 | Markdown, LaTeX, Org, AsciiDoc, Markdown → slides | 42 MB | GPL-2.0-or-later |
+| Ghostscript 10.08 | EPS, PostScript | 60 MB | AGPL-3.0 |
+| calibre 9.15 | Kindle (MOBI, AZW3) and rare e-book formats | 350 MB | GPL-3.0 |
+| LibreOffice 26.2 (+ H2Orestart, JRE on Windows) | DOC, PPT, RTF, ODF and other older or rare Office formats | 297 MB | MPL-2.0 (+ LGPL/GPL parts) |
 
-The **Corresponding Source** of the hosted engines is published in the same release as the packages (assets
-`filee-cli-<version>-source-<engine>.tar.gz`, also listed in `SHA256SUMS`). Each holds a `SOURCES.md` (written offer,
-every component with version, license, URL, commit or SHA-256, how the binary was built, and anything that could not be
-pinned) and the pinned sources themselves; the machine-readable pins are in
-[`data/engine-sources/`](data/engine-sources). To drop an engine you do not want, delete its folder under `engines/`:
-only the conversions it provided go away. If you install an engine yourself and put it on `PATH`, `filee-cli` uses
-the bundled copy first (Filee's lookup order), then the one on `PATH`.
+- Where the PC already has an engine (on the `PATH`, e.g. from Homebrew, or an installed LibreOffice), that one is used
+  and nothing is downloaded.
+- macOS: upstream Filee has no FFmpeg or Ghostscript download there. This repository adds one for each in a
+  [patch](patches/0001-on-demand-engines.patch): [Martin Riedl's](https://ffmpeg.martin-riedl.de) GPL build of FFmpeg 9.0.2
+  (his signature is kept) and conda-forge's `gs` 10.08.0 (same release Filee downloads for Windows). Both are checked
+  against SHA-256 values computed by this repository. The bundled Ghostscript needs macOS 14.5 or later
+  ([#5](https://github.com/NomaDamas/filee-cli/issues/5)).
+- Linux has no Ghostscript or LibreOffice download (Filee offers none): install them with your package manager and
+  `filee-cli` finds them. `filee-cli engines list` says so.
+- Concurrent `filee-cli` processes take turns installing (a lock file in the engines folder), so two of them never
+  unpack into the same folder.
+- On Linux calibre is a Qt program: it needs `libxcb1 libxkbcommon0 libfontconfig1 libfreetype6 libx11-6 libegl1
+  libopengl0 libglx0` (apt names) even without a display. Without them only calibre's conversions (for example EPUB →
+  MOBI) fail, with an error naming the missing library.
 
-Engines Filee can use but that this package does not carry (Ghostscript and LibreOffice on Linux) are listed in the
-"Optional engines, not distributed here" section of `THIRD-PARTY-NOTICES.md` with license and download link; install
-one on `PATH` and `filee-cli` finds it. `filee-cli` has no command to download engines.
-
-On Linux the bundled calibre is a Qt program: it needs `libxcb1 libxkbcommon0 libfontconfig1 libfreetype6 libx11-6
-libegl1 libopengl0 libglx0` (apt names) even without a display. Without them only calibre's conversions (for example
-EPUB → MOBI) fail, with an error naming the missing library.
-
-The packages are large because of this (about 600 MB to 900 MB each). `filee-cli formats` lists what each package can do.
+Each engine keeps its own license, listed with the official download and source location in the package's
+`THIRD-PARTY-NOTICES.md` ("Engines downloaded on demand"). They are the vendors' unmodified files, fetched from the
+vendors' sites; **this repository does not redistribute them**, so it hosts no engine source code. `filee-cli formats`
+lists every format, and `filee-cli formats <format>` what it converts to.
 
 ## How the packages are made
 
 ```
 UPSTREAM (tag + commit) ──► filee-build fetch ──► dotnet publish src/Filee.Cli (self-contained, per RID)
-                                                          + rhwp + 7-Zip + the platform's engines (pinned, SHA-256 checked)
+                                                          + rhwp + 7-Zip
                                                           + generated notices, UPSTREAM.md ──► archive ──► smoke test
 ```
 

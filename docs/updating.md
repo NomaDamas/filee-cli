@@ -9,7 +9,7 @@ Nothing from upstream lives in this repository: `UPSTREAM` pins a tag and the ex
 2. **Edit `UPSTREAM`**: `tag`, `commit` (`git ls-remote https://github.com/KnifeLemon/Filee refs/tags/<tag>^{}`),
    `revision=1`. A change that is only in this repository (scripts, docs, patches) keeps the upstream tag and
    raises `revision` (`1.12.0-1` → `1.12.0-2`).
-3. **If upstream changed a bundled engine** (`engines.json`, `rhwp` or `7zip` version): update `data/pins.json`
+3. **If upstream changed rhwp or 7-Zip** (`engines.json`, `rhwp` or `7zip` version): update `data/pins.json`
    (version, tag, commit; `rust_toolchain` from the new tag's `rust-toolchain.toml`) and rerun
    `./filee-build crates` (needs `cargo`, network). `filee-build package` stops with a clear message when
    the two disagree, and so does `filee-build rhwp`.
@@ -22,23 +22,14 @@ Nothing from upstream lives in this repository: `UPSTREAM` pins a tag and the ex
      the library in the package is byte-identical to that asset.
    * *a NuGet package without a commit in its nuspec*: add `ref_override` / `license_override` in
      `data/nuget-sources.json` with how you found it.
-   * *a new optional engine in `engines.json`*: describe it in `data/optional-engines.json` (license, download URL).
-   * *an engine version or hash changed in `engines.json`* (pandoc, FFmpeg, calibre, Ghostscript, LibreOffice,
-     H2Orestart, JRE, VC++ runtime): the package build stops with "re-pin the sources". Redo the pin file
-     `data/engine-sources/<engine>.json` for the new binary: its `binaries` (URL, SHA-256, size), and the sources it was
-     built from (tag resolved to a full commit; every tarball with SHA-256 and size; svn revisions). Never copy a
-     hash you did not compute by downloading the file. Run `filee-build verify-sources` (offline checks) and
-     `filee-build sources --engines <engine>` (downloads and bundles; it re-verifies every hash and commit).
-     Where upstream pins a binary whose build is not reproducible from published scripts (the Windows FFmpeg),
-     `binaryOverrides` in `cmd/filee-build/engines.go` names the replacement and why.
-   * *an engine added or dropped for a platform*: `engineSets` in `cmd/filee-build/engines.go`, then a pin file as above.
-   * *an engine bundled where upstream has no download* (FFmpeg and Ghostscript on macOS): listed in `extraEngines`
-     with the reason; its `binaries.<rid>` pin carries `kind` (`zip-program`: a zip holding one program, `archive_member`,
-     optional `companion` zips such as ffprobe; `conda-unix-bin`: a conda-forge macOS package of which only `bin/<program>`
-     and the licenses are kept). The build stops with "extraEngines[...] is obsolete" once upstream offers the engine.
-     FFmpeg on macOS follows Martin Riedl's release builds: take the new build's `versions.txt`, find the commit of
-     https://git.martin-riedl.de/ffmpeg/build-script whose `version/*` files match it, and re-pin every `platforms`
-     source containing `osx-*` from that commit's `script/build-*.sh` (download URL, SHA-256 computed by downloading).
+   * *a new engine in `engines.json`*: describe it in `data/optional-engines.json` (license, download URL, source).
+   * *an engine version or hash changed in `engines.json`*: nothing to do here: `filee-cli` reads the pins from the
+     upstream source it is built from, so the new download is used by the next build.
+   * *macOS FFmpeg and Ghostscript* (upstream has no download there): `patches/0001-on-demand-engines.patch` adds them
+     to `engines.json` (kinds `zip-programs` with a `companions` list for ffprobe, and `conda-unix`). To bump them,
+     change the entries in that patch: FFmpeg is Martin Riedl's release build (`https://ffmpeg.martin-riedl.de`, the
+     `ffmpeg.zip` and `ffprobe.zip` of one build), Ghostscript a conda-forge `osx-arm64`/`osx-64` package. SHA-256 and
+     size are computed by downloading the file, never copied. Once upstream offers them, drop that part of the patch.
 5. **Build locally** (any one platform is enough to catch most problems):
    ```sh
    go build -o filee-build ./cmd/filee-build

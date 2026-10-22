@@ -2,18 +2,21 @@
 
 ## What this repository redistributes
 
-Binary packages of `Filee.Cli` (MIT) built from the unmodified upstream source at a pinned commit, with
+Binary packages of `Filee.Cli` (MIT) built from the upstream source at a pinned commit plus the patches in `patches/` (they add on-demand engine
+downloads to the command line), with
 [rhwp](https://github.com/edwardkim/rhwp) (MIT) and [7-Zip](https://github.com/ip7z/7zip) (LGPL-2.1+) next to it.
 Every package carries `LICENSE` (upstream's MIT text with its copyright line intact; one more line covers this
 repository's own scripts), `THIRD-PARTY-NOTICES.md`, `licenses/` and `UPSTREAM.md`.
 
 * **Corresponding source** for LGPL/MPL parts is named with tag or commit URLs in `THIRD-PARTY-NOTICES.md`
   (7-Zip, the ImageMagick delegate libraries inside Magick.Native, OpenMcdf, UTF.Unknown).
-* **GPL, LGPL and AGPL engines are bundled** (Pandoc, FFmpeg, calibre, Ghostscript, H2Orestart, Temurin; LibreOffice is
-  MPL-2.0). They are unmodified vendor binaries started as separate processes, never linked into `filee-cli`. Their
-  Corresponding Source is hosted in the release (`filee-cli-<version>-source-<engine>.tar.gz`) from the pins in
-  `data/engine-sources/`; LibreOffice's source is named by URL and SHA-256 (MPL source availability), and the Microsoft
-  VC++ runtime has no source. Anything that could not be pinned is stated in the `unresolved` lists, never hidden.
+* **GPL, LGPL and AGPL engines are not redistributed.** Pandoc, FFmpeg, calibre, Ghostscript, H2Orestart, Temurin and
+  LibreOffice (MPL-2.0) are neither in the packages nor in the release assets. `filee-cli` downloads the vendor's own
+  unmodified file from the vendor's site (the URLs Filee pins; on macOS also Martin Riedl's FFmpeg and conda-forge's
+  Ghostscript) when the user's conversion needs it, checks its SHA-256, and starts it as a separate process, never
+  linked into `filee-cli`. The user's computer receives the engine from its vendor, with the vendor's license and
+  source offer; this repository hosts no engine source. `THIRD-PARTY-NOTICES.md` lists each engine with license,
+  official download and source location.
 * **7-Zip's unRAR restriction** is repeated in the notices and `engines/7zip/License.txt` ships unchanged.
 
 ## Trademark: unresolved, handled conservatively

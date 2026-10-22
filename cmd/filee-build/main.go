@@ -17,8 +17,6 @@ const usage = `filee-build: build and release filee-cli packages from a pinned u
   smoke   ARCHIVE                    unpack an archive and run it (version, conversions, exit codes)
   glibc   [--max 2.35] PATH...       fail when an ELF file needs a newer glibc
   crates                             regenerate data/*-crates.tsv (needs cargo)
-  sources [--engines a,b]            build the Corresponding Source archives of the bundled GPL/LGPL/AGPL engines
-  verify-sources                     check data/engine-sources/*.json (offline)
   release DIR [--tag T]              write SHA256SUMS and RELEASE_NOTES.md for the five archives in DIR
   local   [flags]                    build and test packages on this computer (docker for Linux, ssh for Windows)
 
@@ -40,7 +38,7 @@ func realMain(args []string) int {
 	}
 	commands := map[string]func([]string) error{
 		"fetch": cmdFetch, "rhwp": cmdRhwp, "package": cmdPackage, "smoke": cmdSmoke, "glibc": cmdGlibc,
-		"crates": cmdCrates, "sources": cmdSources, "verify-sources": func([]string) error { return verifySources() }, "release": cmdRelease, "local": cmdLocal,
+		"crates": cmdCrates, "release": cmdRelease, "local": cmdLocal,
 	}
 	fn, ok := commands[args[0]]
 	if !ok {

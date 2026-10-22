@@ -3,7 +3,7 @@ name: Release
 # Publishes a GitHub release from a tag v<UPSTREAM version>-<revision>, e.g. v1.12.0-1 for UPSTREAM tag=v1.12.0,
 # revision=1. Run it on the tag: `gh workflow run release.yml --ref v1.12.0-1`. The tag must match the UPSTREAM file
 # (`filee-build release` checks it) and point at a commit on main. All five packages are built and smoke-tested first,
-# and the Corresponding Source of the bundled engines is fetched; the release job only runs when all of it succeeds.
+# the release job only runs when all of it succeeds.
 #
 # Manual, not on tag push: `filee-build local --publish` can also push the tag and create the release from a
 # computer. The Homebrew tap and the Scoop bucket (their own repositories) poll the latest release and update

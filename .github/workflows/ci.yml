@@ -1,7 +1,7 @@
 name: CI
 
-# Builds the five packages on GitHub's runners (free for a public repository). Every build downloads about 1.5 GB of
-# engines and takes tens of minutes, so it runs on pull requests and when started by hand, not on every push.
+# Builds the five packages on GitHub's runners (free for a public repository). The smoke test downloads FFmpeg, Pandoc and
+# (macOS, Windows) Ghostscript from their vendors, so it runs on pull requests and when started by hand, not on every push.
 
 on:
   pull_request:
