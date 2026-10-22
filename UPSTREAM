@@ -1,7 +1,7 @@
 # Pinned upstream source. Build tooling reads this file; see docs/updating.md.
 repository=https://github.com/KnifeLemon/Filee
-tag=v1.12.0
-commit=49911afab6eef81f144543710f1aa8021c617ff1
+tag=v2.0.0
+commit=799e39485f2aa78677f9ba51f692e862a7af76a6
 # Packaging revision: bump when this repository changes the artifacts without an upstream change.
-# Package version = upstream version + "-" + revision, e.g. 1.12.0-1.
+# Package version = upstream version + "-" + revision, e.g. 2.0.0-1.
 revision=1
