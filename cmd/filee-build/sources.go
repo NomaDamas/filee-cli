@@ -386,7 +386,9 @@ func prepareSVN(engine string, s engineSource) (string, error) {
 	if err := os.MkdirAll(filepath.Dir(dir), 0o755); err != nil {
 		return "", err
 	}
-	if _, err := run(runOpts{Dir: filepath.Dir(dir)}, "svn", "export", "-r", s.Ref, s.URL, dir); err != nil {
+	// Public svn servers such as svn.xvid.org answer 401 to a client without credentials: their documented anonymous
+	// access is the user "anonymous" with an empty password (never prompt, CI has no terminal).
+	if _, err := run(runOpts{Dir: filepath.Dir(dir)}, "svn", "export", "--non-interactive", "--username", "anonymous", "--password", "", "-r", s.Ref, s.URL, dir); err != nil {
 		return "", fmt.Errorf("svn export -r %s %s: %w", s.Ref, s.URL, err)
 	}
 	return dir, nil
