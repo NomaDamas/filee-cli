@@ -31,7 +31,7 @@ filee-cli convert photo.heic --to jpg
 filee-cli convert *.png --to webp -q 80 -o out
 ```
 
-The download is about 85 MB (macOS Apple silicon; CI sizes for the others are in the release table). The conversion engines (FFmpeg, Pandoc, calibre, Ghostscript, LibreOffice) are **not in the package**: the first
+The download is 77 to 87 MB per platform. The conversion engines (FFmpeg, Pandoc, calibre, Ghostscript, LibreOffice) are **not in the package**: the first
 conversion that needs one downloads the vendor's copy, checked against a pinned SHA-256 (see "Engines" below).
 Both package managers check the package's SHA-256.
 
@@ -47,11 +47,11 @@ Releases have five archives and one `SHA256SUMS`:
 | macOS Intel | `filee-cli-<version>-osx-x64.tar.gz` |
 | macOS Apple silicon | `filee-cli-<version>-osx-arm64.tar.gz` |
 
-`<version>` is the upstream version plus this repository's packaging revision, e.g. `2.0.0-1`.
+`<version>` is the upstream version plus this repository's packaging revision, e.g. `2.0.0-2`.
 
 ```sh
 # Download the asset and SHA256SUMS from the release page (or use the Homebrew tap / Scoop bucket below):
-gh release download v2.0.0-1 --repo NomaDamas/filee-cli --pattern 'filee-cli-2.0.0-1-linux-x64.tar.gz' --pattern SHA256SUMS
+gh release download v2.0.0-2 --repo NomaDamas/filee-cli --pattern 'filee-cli-2.0.0-2-linux-x64.tar.gz' --pattern SHA256SUMS
 
 sha256sum --check --ignore-missing SHA256SUMS       # Linux
 shasum -a 256 --check --ignore-missing SHA256SUMS   # macOS
@@ -59,7 +59,7 @@ shasum -a 256 --check --ignore-missing SHA256SUMS   # macOS
 
 ```powershell
 # Windows: the hash must equal the line for the zip in SHA256SUMS
-(Get-FileHash .\filee-cli-2.0.0-1-win-x64.zip -Algorithm SHA256).Hash.ToLower()
+(Get-FileHash .\filee-cli-2.0.0-2-win-x64.zip -Algorithm SHA256).Hash.ToLower()
 Select-String 'win-x64' .\SHA256SUMS
 ```
 
@@ -72,8 +72,8 @@ remove it with `xattr -dr com.apple.quarantine filee-cli-<version>-osx-arm64` (f
 ## Use
 
 ```sh
-tar -xzf filee-cli-2.0.0-1-osx-arm64.tar.gz
-cd filee-cli-2.0.0-1-osx-arm64
+tar -xzf filee-cli-2.0.0-2-osx-arm64.tar.gz
+cd filee-cli-2.0.0-2-osx-arm64
 ./filee-cli version
 ./filee-cli convert photo.png --to webp --json
 ./filee-cli formats

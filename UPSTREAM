@@ -3,5 +3,5 @@ repository=https://github.com/KnifeLemon/Filee
 tag=v2.0.0
 commit=799e39485f2aa78677f9ba51f692e862a7af76a6
 # Packaging revision: bump when this repository changes the artifacts without an upstream change.
-# Package version = upstream version + "-" + revision, e.g. 2.0.0-1.
-revision=1
+# Package version = upstream version + "-" + revision, e.g. 2.0.0-2.
+revision=2

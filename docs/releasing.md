@@ -46,7 +46,7 @@ creates the tag, pushes it, creates a **draft** release with the five archives a
 | Workflow | Trigger | Does |
 |---|---|---|
 | `ci.yml` → `build.yml` | pull requests, or by hand (`gh workflow run ci.yml`) | builds the five packages with `filee-build`, smoke-tests each package (engines are downloaded on demand from the vendors) (Linux inside a clean `ubuntu:22.04` container), checks glibc, uploads artifacts |
-| `release.yml` | by hand on a tag (`gh workflow run release.yml --ref v2.0.0-1`) | the same build, then, only if every job passes: `SHA256SUMS`, release notes, provenance attestation, GitHub release with the five packages |
+| `release.yml` | by hand on a tag (`gh workflow run release.yml --ref v2.0.0-2`) | the same build, then, only if every job passes: `SHA256SUMS`, release notes, provenance attestation, GitHub release with the five packages |
 
 A build takes a few minutes; the smoke test downloads FFmpeg, Pandoc and (macOS, Windows) Ghostscript, about 150 MB.
 calibre and LibreOffice (about 650 MB) are checked on demand by hand, not on every build. Actions are pinned to commit SHAs (comments name the version).
