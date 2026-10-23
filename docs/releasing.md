@@ -45,14 +45,17 @@ creates the tag, pushes it, creates a **draft** release with the five archives a
 
 | Workflow | Trigger | Does |
 |---|---|---|
+| `checks.yml` | every push to `main`, every pull request | on Ubuntu, macOS and Windows: gofmt, `go vet`, builds `filee-build`, fetches upstream and applies the patches, runs the upstream engine-installer and CLI tests against the patched source (nothing is downloaded) |
+| `engines.yml` | Mondays 03:17 UTC, by hand, or in a pull request that changes `smoke.go` or the workflow (`gh workflow run engines.yml -f tag=v2.0.0-2`) | on all five platforms: downloads the published package and runs `filee-build smoke --heavy`, which downloads **every** engine from its vendor onto a clean runner (about 1 GB) and converts with each, so a vendor moving a file is noticed within a week |
 | `ci.yml` → `build.yml` | pull requests, or by hand (`gh workflow run ci.yml`) | builds the five packages with `filee-build`, smoke-tests each package (engines are downloaded on demand from the vendors) (Linux inside a clean `ubuntu:22.04` container), checks glibc, uploads artifacts |
-| `release.yml` | by hand on a tag (`gh workflow run release.yml --ref v2.0.0-2`) | the same build, then, only if every job passes: `SHA256SUMS`, release notes, provenance attestation, GitHub release with the five packages |
+| `release.yml` | pushing a tag `v<version>-<revision>`, or by hand on one (`gh workflow run release.yml --ref v2.0.0-2`); skipped when the tag already has a release | the same build, then, only if every job passes: `SHA256SUMS`, release notes, provenance attestation, GitHub release with the five packages |
 
 A build takes a few minutes; the smoke test downloads FFmpeg, Pandoc and (macOS, Windows) Ghostscript, about 150 MB.
 calibre and LibreOffice (about 650 MB) are checked on demand by hand, not on every build. Actions are pinned to commit SHAs (comments name the version).
 
 To release: update `UPSTREAM` (docs/updating.md), push to `main`, create the annotated tag `v<version>-<revision>` on that
-commit, push the tag, run `release.yml` on it. A tag that never got a release can be moved; a published one must not be.
+commit and push it; `release.yml` starts by itself. (`filee-build local --publish` pushes the tag too and makes the release
+itself; the workflow notices that release and does nothing.) `dependabot.yml` opens weekly pull requests for the pinned actions. A tag that never got a release can be moved; a published one must not be.
 
 ## Homebrew tap and Scoop bucket
 

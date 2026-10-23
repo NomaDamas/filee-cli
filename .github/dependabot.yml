@@ -1,0 +1,14 @@
+# Keeps the pinned GitHub Actions (full commit SHAs with the version in a comment) and the Go module up to date.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: monthly

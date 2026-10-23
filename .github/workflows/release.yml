@@ -1,15 +1,17 @@
 name: Release
 
-# Publishes a GitHub release from a tag v<UPSTREAM version>-<revision>, e.g. v1.12.0-1 for UPSTREAM tag=v1.12.0,
-# revision=1. Run it on the tag: `gh workflow run release.yml --ref v1.12.0-1`. The tag must match the UPSTREAM file
-# (`filee-build release` checks it) and point at a commit on main. All five packages are built and smoke-tested first,
-# the release job only runs when all of it succeeds.
-#
-# Manual, not on tag push: `filee-build local --publish` can also push the tag and create the release from a
-# computer. The Homebrew tap and the Scoop bucket (their own repositories) poll the latest release and update
-# themselves, so this workflow needs no token for them.
+# Publishes a GitHub release from a tag v<UPSTREAM version>-<revision>, e.g. v2.0.0-2 for UPSTREAM tag=v2.0.0,
+# revision=2. Pushing such a tag starts it (`git tag -a v2.0.0-2 -m ... && git push origin v2.0.0-2`), or run it on an
+# existing tag by hand: `gh workflow run release.yml --ref v2.0.0-2`. The tag must match the UPSTREAM file
+# (`filee-build release` checks it) and point at a commit on main. All five packages are built and smoke-tested first;
+# the release job only runs when all of it succeeds. A tag that already has a release is left alone (so
+# `filee-build local --publish`, which pushes the tag and creates the release itself, does not collide with this).
+# The Homebrew tap and the Scoop bucket (their own repositories) poll the latest release and update themselves, so this
+# workflow needs no token for them.
 
 on:
+  push:
+    tags: ['v[0-9]*-[0-9]*']
   workflow_dispatch:
 
 permissions:
@@ -20,11 +22,37 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  gate:
+    name: release exists?
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      exists: ${{ steps.check.outputs.exists }}
+    steps:
+      # `filee-build local --publish` pushes the tag and then creates the release; wait a little for it before deciding.
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = push ]; then sleep 60; fi
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::$TAG already has a release; nothing to do"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
+    needs: gate
+    if: ${{ needs.gate.outputs.exists == 'false' }}
     uses: ./.github/workflows/build.yml
 
   release:
-    needs: build
+    needs: [gate, build]
+    if: ${{ needs.gate.outputs.exists == 'false' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
@@ -77,6 +105,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           shopt -s nullglob
+          # `filee-build local --publish` may have finished this release while the packages were built here.
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::notice::$TAG got a release in the meantime; not creating another"
+            exit 0
+          fi
           gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "filee-cli ${TAG#v}" \
             --notes-file assets/RELEASE_NOTES.md --draft \
             assets/filee-cli-*.tar.gz assets/filee-cli-*.zip assets/filee-cli-*.part* assets/SHA256SUMS
