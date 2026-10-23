@@ -47,11 +47,11 @@ Releases have five archives and one `SHA256SUMS`:
 | macOS Intel | `filee-cli-<version>-osx-x64.tar.gz` |
 | macOS Apple silicon | `filee-cli-<version>-osx-arm64.tar.gz` |
 
-`<version>` is the upstream version plus this repository's packaging revision, e.g. `2.0.0-2`.
+`<version>` is the upstream version plus this repository's packaging revision, e.g. `2.0.0-3`.
 
 ```sh
 # Download the asset and SHA256SUMS from the release page (or use the Homebrew tap / Scoop bucket below):
-gh release download v2.0.0-2 --repo NomaDamas/filee-cli --pattern 'filee-cli-2.0.0-2-linux-x64.tar.gz' --pattern SHA256SUMS
+gh release download v2.0.0-3 --repo NomaDamas/filee-cli --pattern 'filee-cli-2.0.0-3-linux-x64.tar.gz' --pattern SHA256SUMS
 
 sha256sum --check --ignore-missing SHA256SUMS       # Linux
 shasum -a 256 --check --ignore-missing SHA256SUMS   # macOS
@@ -59,7 +59,7 @@ shasum -a 256 --check --ignore-missing SHA256SUMS   # macOS
 
 ```powershell
 # Windows: the hash must equal the line for the zip in SHA256SUMS
-(Get-FileHash .\filee-cli-2.0.0-2-win-x64.zip -Algorithm SHA256).Hash.ToLower()
+(Get-FileHash .\filee-cli-2.0.0-3-win-x64.zip -Algorithm SHA256).Hash.ToLower()
 Select-String 'win-x64' .\SHA256SUMS
 ```
 
@@ -72,8 +72,8 @@ remove it with `xattr -dr com.apple.quarantine filee-cli-<version>-osx-arm64` (f
 ## Use
 
 ```sh
-tar -xzf filee-cli-2.0.0-2-osx-arm64.tar.gz
-cd filee-cli-2.0.0-2-osx-arm64
+tar -xzf filee-cli-2.0.0-3-osx-arm64.tar.gz
+cd filee-cli-2.0.0-3-osx-arm64
 ./filee-cli version
 ./filee-cli convert photo.png --to webp --json
 ./filee-cli formats
