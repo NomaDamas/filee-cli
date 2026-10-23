@@ -846,18 +846,20 @@ index 6be3c15..b85d076 100644
        }
      }
 diff --git a/tests/Filee.Engines.Tests/EngineInstallerTests.cs b/tests/Filee.Engines.Tests/EngineInstallerTests.cs
-index 8faf7dd..b02e4a1 100644
+index 8faf7dd..a8081a5 100644
 --- a/tests/Filee.Engines.Tests/EngineInstallerTests.cs
 +++ b/tests/Filee.Engines.Tests/EngineInstallerTests.cs
-@@ -266,6 +266,113 @@ public void Conda_packages_cannot_write_outside_the_engine_folder()
+@@ -266,6 +266,115 @@ public void Conda_packages_cannot_write_outside_the_engine_folder()
          Assert.False(File.Exists(Path.Combine(_root, "evil.txt")));
      }
  
 +    [Fact]
 +    public async Task A_component_with_a_companion_downloads_both_into_one_folder_and_a_changed_companion_makes_it_outdated()
 +    {
-+        var main = Zip(("ffmpeg", "main"));
-+        var probe = Zip(("ffprobe", "probe"));
++        // The programs are named as the platform names them (ffmpeg.exe on Windows).
++        var (ffmpeg, ffprobe) = (EngineEnvironment.ProgramName("ffmpeg.exe"), EngineEnvironment.ProgramName("ffprobe.exe"));
++        var main = Zip((ffmpeg, "main"));
++        var probe = Zip((ffprobe, "probe"));
 +        var companion = new EngineCompanion("https://example.test/ffprobe.zip", Convert.ToHexString(SHA256.HashData(probe)), probe.Length);
 +        var component = Component("ffmpeg", "zip-programs", main) with { Companions = [companion] };
 +        var server = new FakeServer(new() { [component.Url] = main, [companion.Url] = probe });
@@ -867,13 +869,13 @@ index 8faf7dd..b02e4a1 100644
 +        await installer.InstallAsync(package, null, TestContext.Current.CancellationToken);
 +
 +        var folder = Path.Combine(_root, "ffmpeg");
-+        Assert.Equal("main", File.ReadAllText(Path.Combine(folder, "ffmpeg")));
-+        Assert.Equal("probe", File.ReadAllText(Path.Combine(folder, "ffprobe")));
++        Assert.Equal("main", File.ReadAllText(Path.Combine(folder, ffmpeg)));
++        Assert.Equal("probe", File.ReadAllText(Path.Combine(folder, ffprobe)));
 +        Assert.True(installer.IsUpToDate(package));
 +        Assert.Empty(Directory.GetFiles(Path.Combine(_root, ".downloads")));
 +
 +        // The same main file with a different companion is a different install: the marker covers both.
-+        var other = Zip(("ffprobe", "newer"));
++        var other = Zip((ffprobe, "newer"));
 +        var changed = component with { Companions = [new EngineCompanion(companion.Url, Convert.ToHexString(SHA256.HashData(other)), other.Length)] };
 +        Assert.False(Installer(server, changed).IsUpToDate(package));
 +    }
@@ -881,8 +883,8 @@ index 8faf7dd..b02e4a1 100644
 +    [Fact]
 +    public async Task A_companion_with_the_wrong_checksum_rejects_the_whole_install()
 +    {
-+        var main = Zip(("ffmpeg", "main"));
-+        var probe = Zip(("ffprobe", "probe"));
++        var main = Zip((EngineEnvironment.ProgramName("ffmpeg.exe"), "main"));
++        var probe = Zip((EngineEnvironment.ProgramName("ffprobe.exe"), "probe"));
 +        var companion = new EngineCompanion("https://example.test/ffprobe.zip", new string('0', 64), probe.Length);
 +        var component = Component("ffmpeg", "zip-programs", main) with { Companions = [companion] };
 +        var installer = Installer(new FakeServer(new() { [component.Url] = main, [companion.Url] = probe }), component);
