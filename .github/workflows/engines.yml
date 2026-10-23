@@ -6,6 +6,11 @@ name: Engines on demand
 # (about 650 MB, and on Windows 15 minutes each) are added with `filee-build smoke --heavy`.
 
 on:
+  # Only when the smoke test itself or this workflow changes (every run downloads about 1 GB).
+  pull_request:
+    paths:
+      - cmd/filee-build/smoke.go
+      - .github/workflows/engines.yml
   schedule:
     - cron: '17 3 * * 1'   # Mondays, 03:17 UTC
   workflow_dispatch:
