@@ -845,6 +845,19 @@ index 6be3c15..b85d076 100644
          }
        }
      }
+diff --git a/tests/Filee.Cli.Tests/CliTests.cs b/tests/Filee.Cli.Tests/CliTests.cs
+index c268796..cfaf6f2 100644
+--- a/tests/Filee.Cli.Tests/CliTests.cs
++++ b/tests/Filee.Cli.Tests/CliTests.cs
+@@ -260,7 +260,7 @@ public async Task Jpeg_xr_converts_on_windows_and_is_no_download_away_elsewhere(
+         Assert.Equal(Cli.Success, code);
+         Assert.Equal(OperatingSystem.IsWindows(), output.Contains("png, jpg", StringComparison.Ordinal));
+         // Elsewhere no download would help (on Windows, FFmpeg adds HEIC and video).
+-        Assert.Equal(OperatingSystem.IsWindows(), output.Contains("optional engines", StringComparison.Ordinal));
++        Assert.Equal(OperatingSystem.IsWindows(), output.Contains("filee engines list", StringComparison.Ordinal));
+     }
+ 
+     /// <summary>Adds presets to the settings folder the CLI runs with.</summary>
 diff --git a/tests/Filee.Engines.Tests/EngineInstallerTests.cs b/tests/Filee.Engines.Tests/EngineInstallerTests.cs
 index 8faf7dd..a8081a5 100644
 --- a/tests/Filee.Engines.Tests/EngineInstallerTests.cs
