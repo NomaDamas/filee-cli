@@ -6,8 +6,9 @@ name: Release
 # (`filee-build release` checks it) and point at a commit on main. All five packages are built and smoke-tested first;
 # the release job only runs when all of it succeeds. A tag that already has a release is left alone (so
 # `filee-build local --publish`, which pushes the tag and creates the release itself, does not collide with this).
-# The Homebrew tap and the Scoop bucket (their own repositories) poll the latest release and update themselves, so this
-# workflow needs no token for them.
+# After publishing, the last job tells the Homebrew tap and the Scoop bucket (their own repositories) to update: it pushes
+# a tag `release-<version>` to each with a deploy key that can write to that one repository only (secrets
+# TAP_HOMEBREW_DEPLOY_KEY and TAP_SCOOP_DEPLOY_KEY). Their own schedule still polls every six hours as a fallback.
 
 on:
   push:
@@ -119,3 +120,39 @@ jobs:
         with:
           name: file-listings
           path: listings/
+
+  # A tap that cannot be told does not undo the release, and its own schedule catches up: the job fails loudly instead.
+  taps:
+    name: update Homebrew tap and Scoop bucket
+    needs: [gate, release]
+    if: ${{ needs.gate.outputs.exists == 'false' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - name: Push a release tag to each tap
+        env:
+          HOMEBREW_KEY: ${{ secrets.TAP_HOMEBREW_DEPLOY_KEY }}
+          SCOOP_KEY: ${{ secrets.TAP_SCOOP_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          ssh-keyscan -t ed25519 github.com > ~/.ssh/known_hosts 2>/dev/null
+          notify() {
+            local repo=$1 key=$2 file
+            [ -n "$key" ] || { echo "::error::no deploy key for $repo"; return 1; }
+            file=$(mktemp); printf '%s\n' "$key" > "$file"; chmod 600 "$file"
+            export GIT_SSH_COMMAND="ssh -i $file -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+            local dir; dir=$(mktemp -d)
+            git clone -q --depth 1 "git@github.com:NomaDamas/$repo.git" "$dir"
+            git -C "$dir" tag -f "release-${TAG#v}"
+            git -C "$dir" push -q --force origin "refs/tags/release-${TAG#v}"
+            echo "told $repo about ${TAG#v}"
+          }
+          status=0
+          notify homebrew-filee-cli "$HOMEBREW_KEY" || status=1
+          notify scoop-filee-cli "$SCOOP_KEY" || status=1
+          exit $status
