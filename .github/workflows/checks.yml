@@ -1,0 +1,64 @@
+name: Checks
+
+# Fast checks on every push to main and every pull request, on the three operating systems the packages run on:
+# the build program (gofmt, vet, build), the patch applying to the pinned upstream source, and the upstream tests that
+# cover the code the patch adds (engine installer, CLI). The five packages themselves are built by ci.yml.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  DOTNET_NOLOGO: '1'
+
+jobs:
+  checks:
+    name: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-15, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: gofmt
+        run: test -z "$(gofmt -l cmd)" || { gofmt -l cmd; exit 1; }
+
+      - run: go vet ./cmd/filee-build
+
+      - run: go build -trimpath -o filee-build ./cmd/filee-build
+
+      - name: Fetch the pinned upstream source and apply the patches
+        run: ./filee-build fetch
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: .upstream/Filee/global.json
+
+      # The installer tests use a fake HTTP server; the CLI tests convert with built-in engines only. Nothing is downloaded.
+      - name: Engine installer and download-list tests
+        run: dotnet test .upstream/Filee/tests/Filee.Engines.Tests --filter "FullyQualifiedName~EngineInstallerTests|FullyQualifiedName~PortableEngineTests|FullyQualifiedName~EngineDownloads"
+
+      - name: CLI tests
+        run: dotnet test .upstream/Filee/tests/Filee.Cli.Tests

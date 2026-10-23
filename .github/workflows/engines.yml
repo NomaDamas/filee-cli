@@ -1,0 +1,69 @@
+name: Engines on demand
+
+# Downloads every engine from its vendor onto a clean runner and converts with it, using the latest published release
+# of each package. Vendors move or remove files; this fails the week it happens instead of the week a user finds out.
+# The release workflow's smoke test already covers Pandoc, FFmpeg and Ghostscript; here calibre and LibreOffice
+# (about 650 MB, and on Windows 15 minutes each) are added with `filee-build smoke --heavy`.
+
+on:
+  schedule:
+    - cron: '17 3 * * 1'   # Mondays, 03:17 UTC
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to test (default: the latest release)'
+        required: false
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+
+jobs:
+  engines:
+    name: ${{ matrix.rid }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {rid: linux-x64,   runner: ubuntu-22.04,     ext: tar.gz}
+          - {rid: linux-arm64, runner: ubuntu-22.04-arm, ext: tar.gz}
+          - {rid: osx-arm64,   runner: macos-15,         ext: tar.gz}
+          - {rid: osx-x64,     runner: macos-15-intel,   ext: tar.gz}
+          - {rid: win-x64,     runner: windows-2022,     ext: zip}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 150
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - run: go build -trimpath -o filee-build ./cmd/filee-build
+
+      - name: Download the published package
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          mkdir -p pkg
+          gh release download ${TAG:+"$TAG"} --repo "$GITHUB_REPOSITORY" --dir pkg --pattern 'filee-cli-*-${{ matrix.rid }}.${{ matrix.ext }}'
+          ls -l pkg
+
+      # calibre is a Qt program: it needs these libraries even without a display (see the package README).
+      - name: Libraries a Linux user installs
+        if: ${{ startsWith(matrix.rid, 'linux-') }}
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            fonts-noto-cjk libxcb1 libxkbcommon0 libfontconfig1 libfreetype6 libx11-6 libegl1 libopengl0 libglx0
+
+      - name: Smoke test with every engine
+        run: ./filee-build smoke --heavy pkg/filee-cli-*-${{ matrix.rid }}.${{ matrix.ext }}

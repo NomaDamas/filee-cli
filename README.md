@@ -118,13 +118,17 @@ filee-cli convert clip.mp4 --to mp3      # downloads FFmpeg first (on stderr), t
 filee-cli convert a.md --to pdf --no-install   # never download: a missing engine fails the file and names it
 ```
 
-| Engine | Used for | Download | License |
+| Engine | Used for | Download (macOS / Windows / Linux) | License |
 |---|---|---|---|
-| FFmpeg 9.0.2 | video, audio, Live Photo, HEIC writing | 33 to 56 MB | GPL-3.0-or-later |
-| Pandoc 3.12 | Markdown, LaTeX, Org, AsciiDoc, Markdown → slides | 42 MB | GPL-2.0-or-later |
-| Ghostscript 10.08 | EPS, PostScript | 60 MB | AGPL-3.0 |
-| calibre 9.15 | Kindle (MOBI, AZW3) and rare e-book formats | 350 MB | GPL-3.0 |
-| LibreOffice 26.2 (+ H2Orestart, JRE on Windows) | DOC, PPT, RTF, ODF and other older or rare Office formats | 297 MB | MPL-2.0 (+ LGPL/GPL parts) |
+| FFmpeg 9.0.2 | video, audio, Live Photo, HEIC writing | 54 to 68 MB / 100 MB / 127 to 151 MB | GPL-3.0-or-later |
+| Pandoc 3.12 | Markdown, LaTeX, Org, AsciiDoc, Markdown → slides | 26 to 42 MB / 42 MB / 35 to 38 MB | GPL-2.0-or-later |
+| Ghostscript 10.08 | EPS, PostScript | 60 MB / 20 MB / none (use your package manager) | AGPL-3.0 |
+| calibre 9.15 | Kindle (MOBI, AZW3) and rare e-book formats | 350 MB / 227 MB / 182 to 195 MB | GPL-3.0 |
+| LibreOffice 26.2 | DOC, PPT, RTF, ODF and other older or rare Office formats | 298 to 308 MB / 423 MB (with the HWP filter H2Orestart and a JRE) / none (use your package manager) | MPL-2.0 (+ LGPL/GPL parts) |
+
+Sizes are the pinned downloads (`filee-cli engines list` shows the ones for your computer); a first LibreOffice or calibre
+conversion on Windows took about 15 minutes to download and unpack on the test machine, later ones take seconds. The
+download size on disk after unpacking is larger (calibre about 660 MB, LibreOffice 1.3 GB).
 
 - Where the PC already has an engine (on the `PATH`, e.g. from Homebrew, or an installed LibreOffice), that one is used
   and nothing is downloaded.

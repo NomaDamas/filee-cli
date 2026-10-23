@@ -20,12 +20,15 @@ import (
 var smokeRequired = []string{"LICENSE", "THIRD-PARTY-NOTICES.md", "UPSTREAM.md", "README.md", "engines/rhwp/LICENSE", "engines/7zip/License.txt"}
 
 // cmdSmoke unpacks a release archive and runs it: version, exit codes, PNG->WebP, MD->DOCX, MD->HWPX->PDF (rhwp, Korean
-// text) and ZIP->7Z (7-Zip), plus the package layout. The first failure stops it.
+// text) and ZIP->7Z (7-Zip), plus the package layout, then downloads Pandoc, FFmpeg and Ghostscript on demand. With
+// --heavy it also downloads calibre and LibreOffice. The first failure stops it.
 func cmdSmoke(args []string) error {
-	if len(args) != 1 {
-		return fmt.Errorf("usage: smoke ARCHIVE")
+	fl := newFlags("smoke")
+	heavy := fl.Bool("heavy", false, "also download calibre and LibreOffice (about 650 MB) and convert with them")
+	if err := fl.Parse(reorder(args)); err != nil || fl.NArg() != 1 {
+		return fmt.Errorf("usage: smoke [--heavy] ARCHIVE")
 	}
-	archive, err := filepath.Abs(args[0])
+	archive, err := filepath.Abs(fl.Arg(0))
 	if err != nil {
 		return err
 	}
@@ -74,7 +77,11 @@ func cmdSmoke(args []string) error {
 	if err := os.MkdirAll(work, 0o755); err != nil {
 		return err
 	}
-	s := &smoke{exe: exe, work: work}
+	s := &smoke{exe: exe, work: work, timeout: 5 * time.Minute}
+	if *heavy {
+		// Installing LibreOffice or calibre can take a quarter of an hour on a slow connection.
+		s.timeout = 60 * time.Minute
+	}
 
 	out, err := s.run(0, "version")
 	if err != nil {
@@ -175,7 +182,7 @@ func cmdSmoke(args []string) error {
 	if _, err := s.run(2, "convert", filepath.Join(work, "nothing-to-do"), "--to", "pdf"); err != nil {
 		return err
 	}
-	if err := smokeEngines(s, pkg, name, kind == "zip"); err != nil {
+	if err := smokeEngines(s, pkg, name, kind == "zip", *heavy); err != nil {
 		return err
 	}
 	fmt.Println("smoke test passed:", base)
@@ -184,6 +191,7 @@ func cmdSmoke(args []string) error {
 
 type smoke struct {
 	exe, work string
+	timeout   time.Duration
 	env       []string // extra environment for filee-cli (nil: inherit)
 }
 
@@ -215,7 +223,7 @@ func (s *smoke) runSplit(expect int, args ...string) (string, string, error) {
 	var err error
 	select {
 	case err = <-done:
-	case <-time.After(5 * time.Minute):
+	case <-time.After(s.timeout):
 		cmd.Process.Kill()
 		return "", "", fmt.Errorf("filee-cli %s: timed out", strings.Join(args, " "))
 	}
@@ -286,7 +294,7 @@ func zipMember(data []byte, name string) ([]byte, error) {
 // does: with a PATH that has no engines and an empty data folder, so every engine is downloaded on demand (SHA-256
 // checked by filee-cli) and one conversion only that engine can do runs. calibre and LibreOffice (about 650 MB together)
 // are not downloaded here; `filee-cli engines list` must still offer them.
-func smokeEngines(s *smoke, pkg, name string, windows bool) error {
+func smokeEngines(s *smoke, pkg, name string, windows, heavy bool) error {
 	entries, err := os.ReadDir(filepath.Join(pkg, "engines"))
 	if err != nil {
 		return err
@@ -436,7 +444,11 @@ func smokeEngines(s *smoke, pkg, name string, windows bool) error {
 	if err != nil {
 		return err
 	}
-	for _, id := range []string{"pandoc", "ffmpeg", "ghostscript"} {
+	checked := []string{"pandoc", "ffmpeg", "ghostscript"}
+	if heavy {
+		checked = append(checked, "calibre", "libreoffice")
+	}
+	for _, id := range checked {
 		if !downloads(id) {
 			continue
 		}
@@ -446,12 +458,70 @@ func smokeEngines(s *smoke, pkg, name string, windows bool) error {
 			}
 		}
 	}
+	if heavy {
+		if err := smokeHeavy(s, name, windows, onPC, downloads, prepare); err != nil {
+			return err
+		}
+	}
 	// remove deletes only what filee-cli installed.
 	if _, err := s.run(0, "engines", "remove", "pandoc"); err != nil {
 		return err
 	}
 	if _, err := os.Stat(filepath.Join(data, "engines", "pandoc")); err == nil {
 		return fmt.Errorf("engines remove left pandoc behind")
+	}
+	return nil
+}
+
+// smokeHeavy downloads calibre and LibreOffice on demand and converts with them: EPUB -> MOBI (only calibre writes MOBI),
+// ODT -> DOC (only LibreOffice writes DOC) and, on Windows where Filee also installs H2Orestart and a JRE, HWPX -> DOCX.
+// The sources are made by Pandoc and rhwp, which the steps before have installed.
+func smokeHeavy(s *smoke, name string, windows bool, onPC map[string]bool, downloads func(string) bool, prepare func(string) error) error {
+	failed := func(source, target, why string) error { return fmt.Errorf("%s -> %s: %s", source, target, why) }
+	if downloads("calibre") {
+		if err := prepare("calibre"); err != nil {
+			return err
+		}
+		if _, err := s.convert("doc.md", "epub", "doc.epub"); err != nil {
+			return err
+		}
+		mobi, err := s.convert("doc.epub", "mobi", "doc.mobi")
+		if err != nil {
+			return err
+		}
+		if len(mobi) < 68 || string(mobi[60:68]) != "BOOKMOBI" {
+			return failed("doc.epub", "mobi", "not a MOBI file")
+		}
+		fmt.Println("EPUB -> MOBI (calibre, downloaded on demand) ok")
+	}
+	if downloads("libreoffice") {
+		if err := prepare("libreoffice"); err != nil {
+			return err
+		}
+		if _, err := s.convert("doc.md", "odt", "doc.odt"); err != nil {
+			return err
+		}
+		doc, err := s.convert("doc.odt", "doc", "doc.doc")
+		if err != nil {
+			return err
+		}
+		if !bytes.HasPrefix(doc, []byte{0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1}) {
+			return failed("doc.odt", "doc", "not an OLE2 Word file")
+		}
+		fmt.Println("ODT -> DOC (LibreOffice, downloaded on demand) ok")
+		if windows {
+			if _, err := s.convert("doc.md", "hwpx", "doc.hwpx"); err != nil {
+				return err
+			}
+			docx, err := s.convert("doc.hwpx", "docx", "doc.docx")
+			if err != nil {
+				return err
+			}
+			if _, err := zipMember(docx, "word/document.xml"); err != nil {
+				return failed("doc.hwpx", "docx", err.Error())
+			}
+			fmt.Println("HWPX -> DOCX (LibreOffice + H2Orestart + JRE) ok")
+		}
 	}
 	return nil
 }
