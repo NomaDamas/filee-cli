@@ -59,12 +59,12 @@ itself; the workflow notices that release and does nothing.) `dependabot.yml` op
 
 ## Homebrew tap and Scoop bucket
 
-Two small repositories carry the install manifests; neither holds a binary and neither needs a token from this one.
+Two small repositories carry the install manifests; neither holds a binary. `release.yml` ends with the job `update Homebrew tap and Scoop bucket`: it pushes a tag `release-<version>` to each repository, which starts that repository's `update.yml` at once. The push uses a **deploy key per repository** (write access to that one repository only, stored here as the secrets `TAP_HOMEBREW_DEPLOY_KEY` and `TAP_SCOOP_DEPLOY_KEY`); no personal access token exists. Each `update.yml` still polls every 6 hours as a fallback (GitHub does not always run schedules on time). To rotate a key: `ssh-keygen -t ed25519 -N '' -f key`, replace the deploy key of the repository (`gh api repos/NomaDamas/<repository>/keys`) and `gh secret set` the private half.
 
 | | Repository | File | Updates itself with |
 |---|---|---|---|
-| Homebrew (macOS, Linux) | [`NomaDamas/homebrew-filee-cli`](https://github.com/NomaDamas/homebrew-filee-cli) | `Formula/filee-cli.rb` | `update.yml` every 6 hours: reads `SHA256SUMS` of the latest release and rewrites the four URLs and hashes |
-| Scoop (Windows) | [`NomaDamas/scoop-filee-cli`](https://github.com/NomaDamas/scoop-filee-cli) | `bucket/filee-cli.json` | `update.yml` every 6 hours: Scoop's own `checkver` and `autoupdate` (version, URL, hash from `SHA256SUMS`) |
+| Homebrew (macOS, Linux) | [`NomaDamas/homebrew-filee-cli`](https://github.com/NomaDamas/homebrew-filee-cli) | `Formula/filee-cli.rb` | `update.yml` on the `release-*` tag and every 6 hours: reads `SHA256SUMS` of the latest release and rewrites the four URLs and hashes |
+| Scoop (Windows) | [`NomaDamas/scoop-filee-cli`](https://github.com/NomaDamas/scoop-filee-cli) | `bucket/filee-cli.json` | `update.yml` on the `release-*` tag and every 6 hours: Scoop's own `checkver` and `autoupdate` (version, URL, hash from `SHA256SUMS`) |
 
 Each has a `test.yml` that installs the package on GitHub's runners (macOS arm64 and Intel, Ubuntu, Windows), audits it and
 converts a file. Run it after a release with `gh workflow run test.yml --repo NomaDamas/<repository>`.

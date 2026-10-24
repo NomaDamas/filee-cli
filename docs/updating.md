@@ -46,7 +46,7 @@ Nothing from upstream lives in this repository: `UPSTREAM` pins a tag and the ex
    the change. `UPSTREAM.md` in the package lists applied patches with their hashes.
 7. **Commit and push, then release**: tag `v<upstream version>-<revision>` on `main` and run `release.yml` on that tag
    (docs/releasing.md); `./filee-build local --publish` does the same from this computer.
-8. The Homebrew tap and Scoop bucket pick the new release up by themselves (see docs/releasing.md).
+8. The release workflow tells the Homebrew tap and Scoop bucket to update right after publishing (see docs/releasing.md).
 
 ## How THIRD-PARTY-NOTICES.md is generated
 
