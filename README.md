@@ -8,7 +8,7 @@ or installer), and are built from a pinned upstream tag by the scripts here.
 - Filee is MIT-licensed (Copyright (c) 2026 Myeonggu Kim (KnifeLemon) and Filee contributors). `LICENSE` keeps that
   notice and adds one line for the scripts, CI and docs of this repository.
 - Source of what you download: upstream tag + commit in [`UPSTREAM`](UPSTREAM) (nothing from upstream is stored in
-  this repository), plus the patches in [`patches/`](patches) (currently none). Every package carries `UPSTREAM.md`
+  this repository), plus the patches in [`patches/`](patches). Every package carries `UPSTREAM.md`
   with the exact commit, SDK version and engine hashes.
 - **Issues**: problems with these packages (missing files, archive layout, checksums, a platform that does not start,
   notices) go to this repository. Problems with a conversion itself (output quality, unsupported file) belong to
@@ -137,6 +137,8 @@ download size on disk after unpacking is larger (calibre about 660 MB, LibreOffi
   (his signature is kept) and conda-forge's `gs` 10.08.0 (same release Filee downloads for Windows). Both are checked
   against SHA-256 values computed by this repository. The bundled Ghostscript needs macOS 14.5 or later
   ([#5](https://github.com/NomaDamas/filee-cli/issues/5)).
+- PML output uses Calibre's PMLZ writer through [this patch](patches/0002-pml-output.patch): `--to pml` creates a
+  `.pmlz` archive containing `index.pml` and its images, because Calibre has no plain `.pml` output plugin.
 - Linux has no Ghostscript or LibreOffice download (Filee offers none): install them with your package manager and
   `filee-cli` finds them. `filee-cli engines list` says so.
 - Concurrent `filee-cli` processes take turns installing (a lock file in the engines folder), so two of them never

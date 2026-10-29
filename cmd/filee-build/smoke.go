@@ -473,7 +473,7 @@ func smokeEngines(s *smoke, pkg, name string, windows, heavy bool) error {
 	return nil
 }
 
-// smokeHeavy downloads calibre and LibreOffice on demand and converts with them: EPUB -> MOBI (only calibre writes MOBI),
+// smokeHeavy downloads calibre and LibreOffice on demand and converts with them: EPUB -> MOBI and PMLZ,
 // ODT -> DOC (only LibreOffice writes DOC) and, on Windows where Filee also installs H2Orestart and a JRE, HWPX -> DOCX.
 // The sources are made by Pandoc and rhwp, which the steps before have installed.
 func smokeHeavy(s *smoke, name string, windows bool, onPC map[string]bool, downloads func(string) bool, prepare func(string) error) error {
@@ -493,6 +493,14 @@ func smokeHeavy(s *smoke, name string, windows bool, onPC map[string]bool, downl
 			return failed("doc.epub", "mobi", "not a MOBI file")
 		}
 		fmt.Println("EPUB -> MOBI (calibre, downloaded on demand) ok")
+		pmlz, err := s.convert("doc.epub", "pml", "doc.pmlz")
+		if err != nil {
+			return err
+		}
+		if _, err := zipMember(pmlz, "index.pml"); err != nil {
+			return failed("doc.epub", "pml", err.Error())
+		}
+		fmt.Println("EPUB -> PMLZ (calibre, downloaded on demand) ok")
 	}
 	if downloads("libreoffice") {
 		if err := prepare("libreoffice"); err != nil {
