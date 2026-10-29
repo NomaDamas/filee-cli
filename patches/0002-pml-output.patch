@@ -1,0 +1,58 @@
+PML output uses Calibre's PMLZ writer.
+
+Calibre 9.15 has no .pml output plugin, so every conversion targeting PML failed even though Filee advertised it.
+Keep the existing `pml` target and PML input support, but invoke Calibre with and allocate a .pmlz output. The archive
+contains index.pml and index_img/, so images are preserved. Includes a real-Calibre regression test that opens the
+result and checks its contents.
+
+Drop it when upstream ships an equivalent.
+
+diff --git a/src/Filee.Engines/Ebooks/CalibreConverter.cs b/src/Filee.Engines/Ebooks/CalibreConverter.cs
+index 931dc21..db77fd0 100644
+--- a/src/Filee.Engines/Ebooks/CalibreConverter.cs
++++ b/src/Filee.Engines/Ebooks/CalibreConverter.cs
+@@ -71,7 +71,9 @@ public async Task<IReadOnlyList<string>> ConvertAsync(ConversionStep step, IProg
+             input = Path.Combine(work, "input." + (step.From == "oeb" ? "zip" : step.From));
+             File.Copy(step.InputPath, input);
+         }
+-        var temp = Path.Combine(work, "output." + step.To);
++        // Calibre's PML writer is selected by .pmlz and keeps index.pml and its images in that archive.
++        var outputExtension = step.To == "pml" ? "pmlz" : step.To;
++        var temp = Path.Combine(work, "output." + outputExtension);
+ 
+         var environment = new Dictionary<string, string>
+         {
+@@ -87,7 +89,7 @@ public async Task<IReadOnlyList<string>> ConvertAsync(ConversionStep step, IProg
+         if (result.ExitCode != 0 || !File.Exists(temp))
+             throw new InvalidOperationException($"Calibre failed (exit {result.ExitCode}). {LastLines(result.StandardError.Trim().Length > 0 ? result.StandardError : result.StandardOutput)}");
+ 
+-        var output = step.Output.Allocate(step.To);
++        var output = step.Output.Allocate(outputExtension);
+         if (output is null)
+             return [];
+         File.Move(temp, output, overwrite: true);
+diff --git a/tests/Filee.Engines.Tests/EbookTests.cs b/tests/Filee.Engines.Tests/EbookTests.cs
+index 3e05ede..341f097 100644
+--- a/tests/Filee.Engines.Tests/EbookTests.cs
++++ b/tests/Filee.Engines.Tests/EbookTests.cs
+@@ -532,6 +532,20 @@ public async Task Calibre_reads_and_writes_rare_formats()
+         Assert.Contains("주석 내용입니다.", text);
+     }
+ 
++    [Fact]
++    public async Task Calibre_maps_pml_output_to_a_pmlz_archive()
++    {
++        Assert.SkipUnless(HasCalibre, "calibre not found (pwsh build/fetch-engines.ps1 -Only calibre)");
++        var epub = EbookBuilders.Epub(fx.NewFolder());
++
++        var output = await ConvertAsync(epub, "pml");
++
++        Assert.Equal(".pmlz", Path.GetExtension(output));
++        using var archive = ZipFile.OpenRead(output);
++        Assert.NotNull(archive.GetEntry("index.pml"));
++        Assert.Contains(archive.Entries, entry => entry.FullName.StartsWith("index_img/", StringComparison.Ordinal));
++    }
++
+     [Fact]
+     public async Task Calibre_ranked_first_makes_a4_pdfs_of_e_books()
+     {
