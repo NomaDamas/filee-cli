@@ -1,0 +1,155 @@
+name: Filee upstream update
+
+# Checks the latest upstream release every day. Clean updates become regular PRs; updates whose patches or tests fail
+# become draft PRs with the pin and branch already prepared for manual migration.
+on:
+  schedule:
+    - cron: '23 4 * * *'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Upstream tag to use instead of the latest release (for example v2.2.0)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: filee-upstream-update
+  cancel-in-progress: false
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  DOTNET_NOLOGO: '1'
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  update:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - id: check
+        name: Find a new upstream release
+        env:
+          REQUESTED_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          current=$(awk -F= '$1 == "tag" { print $2 }' UPSTREAM)
+          if [ -n "$REQUESTED_TAG" ]; then
+            latest=$REQUESTED_TAG
+          else
+            latest=$(gh release view --repo KnifeLemon/Filee --json tagName --jq .tagName)
+          fi
+          if [[ ! "$latest" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Unexpected upstream tag: $latest"
+            exit 1
+          fi
+          if [ "$latest" = "$current" ]; then
+            echo "Already tracking $current"
+            echo 'update=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          branch=automation/filee-$latest
+          if git ls-remote --exit-code --heads origin "$branch" > /dev/null 2>&1; then
+            echo "$branch already exists; not creating a duplicate update"
+            echo 'update=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          commit=$(git ls-remote https://github.com/KnifeLemon/Filee "refs/tags/$latest^{}" | awk '{ print $1 }')
+          if [[ ! "$commit" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Could not resolve $latest to a commit"
+            exit 1
+          fi
+          {
+            echo 'update=true'
+            echo "tag=$latest"
+            echo "commit=$commit"
+            echo "branch=$branch"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Prepare the update branch
+        if: steps.check.outputs.update == 'true'
+        run: |
+          set -euo pipefail
+          git switch -c "${{ steps.check.outputs.branch }}"
+          awk -F= -v tag='${{ steps.check.outputs.tag }}' -v commit='${{ steps.check.outputs.commit }}' \
+            '$1 == "tag" { print $1 "=" tag; next } $1 == "commit" { print $1 "=" commit; next }
+             $1 == "revision" { print $1 "=1"; next } { print }' UPSTREAM > UPSTREAM.new
+          mv UPSTREAM.new UPSTREAM
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add UPSTREAM
+          git commit -m "Update Filee to ${{ steps.check.outputs.tag }}"
+          gh auth setup-git
+          git push -u origin "${{ steps.check.outputs.branch }}"
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        if: steps.check.outputs.update == 'true'
+        with:
+          go-version-file: go.mod
+
+      - name: Build the updater and apply patches
+        id: fetch
+        if: steps.check.outputs.update == 'true'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          go build -trimpath -o filee-build ./cmd/filee-build
+          ./filee-build fetch
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        if: steps.fetch.outcome == 'success'
+        with:
+          global-json-file: .upstream/Filee/global.json
+
+      - name: Test the patched CLI and engine installer
+        id: tests
+        if: steps.fetch.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          dotnet test .upstream/Filee/tests/Filee.Engines.Tests --filter "FullyQualifiedName~EngineInstallerTests|FullyQualifiedName~PortableEngineTests|FullyQualifiedName~EngineDownloads"
+          dotnet test .upstream/Filee/tests/Filee.Cli.Tests
+
+      - name: Open the update PR
+        if: always() && steps.check.outputs.update == 'true'
+        run: |
+          set -euo pipefail
+          tag=${{ steps.check.outputs.tag }}
+          {
+            echo '## Automated upstream update'
+            echo
+            echo "- Tag: \`$tag\`"
+            echo "- Commit: \`${{ steps.check.outputs.commit }}\`"
+            echo '- Packaging revision reset to 1.'
+            echo
+            echo '## Automated verification'
+            echo
+            if [ '${{ steps.fetch.outcome }}' = success ]; then
+              echo '- Upstream fetch and patch application passed.'
+            else
+              echo '- **Upstream fetch or patch application failed; manual migration is required.**'
+            fi
+            if [ '${{ steps.tests.outcome }}' = success ]; then
+              echo '- CLI and engine installer tests passed.'
+            elif [ '${{ steps.fetch.outcome }}' = success ]; then
+              echo '- **Tests failed; manual fixes are required.**'
+            else
+              echo '- Tests could not run because the patched source was not available.'
+            fi
+            echo
+            echo 'Package builds and all platform checks run on this PR. See the [update run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).'
+          } > update-pr.md
+          args=(pr create --repo '${{ github.repository }}' --base main --head '${{ steps.check.outputs.branch }}' \
+            --title "Update Filee to ${tag#v}" --body-file update-pr.md)
+          if [ '${{ steps.fetch.outcome }}' != success ] || [ '${{ steps.tests.outcome }}' != success ]; then
+            args+=(--draft)
+          fi
+          gh "${args[@]}"

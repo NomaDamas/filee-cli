@@ -3,6 +3,14 @@
 Nothing from upstream lives in this repository: `UPSTREAM` pins a tag and the exact commit, and
 `filee-build fetch` checks it out (and stops if the tag has moved).
 
+## Automatic tracking
+
+`.github/workflows/upstream.yml` checks the latest Filee release every day and opens one branch and PR per new tag. It
+updates the pin and resets the packaging revision, applies the existing patches, and runs the CLI and engine-installer
+tests. A clean update opens a regular PR; a patch or test failure opens a draft PR with the branch prepared for the
+manual work below. To check immediately or target a particular release, run
+`gh workflow run upstream.yml` (optionally `-f tag=vX.Y.Z`). Scheduled workflows only run from `main`.
+
 1. **Read what changed.** Compare the tags on GitHub (`KnifeLemon/Filee`). Look at changes to
    `src/Filee.Cli`, `src/Filee.Engines/Infrastructure/engines.json`, `Directory.Packages.props`, `global.json`,
    `build/build-linux-native.py` (its rhwp pin and Rust toolchain), `THIRD-PARTY-NOTICES.md`.
