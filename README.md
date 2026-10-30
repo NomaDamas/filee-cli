@@ -26,7 +26,7 @@ or installer), and are built from a pinned upstream tag by the scripts here.
 | anywhere | the archive from the [latest release](https://github.com/NomaDamas/filee-cli/releases/latest), see below |
 
 ```sh
-filee-cli formats                          # 255 formats, 368 extensions
+filee-cli formats                          # 268 formats, 402 extensions
 filee-cli convert photo.heic --to jpg
 filee-cli convert *.png --to webp -q 80 -o out
 ```
@@ -124,6 +124,7 @@ filee-cli convert a.md --to pdf --no-install   # never download: a missing engin
 | Pandoc 3.12 | Markdown, LaTeX, Org, AsciiDoc, Markdown → slides | 26 to 42 MB / 42 MB / 35 to 38 MB | GPL-2.0-or-later |
 | Ghostscript 10.08 | EPS, PostScript | 60 MB / 20 MB / none (use your package manager) | AGPL-3.0 |
 | calibre 9.15 | Kindle (MOBI, AZW3) and rare e-book formats | 350 MB / 227 MB / 182 to 195 MB | GPL-3.0 |
+| Tesseract 5.4 | OCR (macOS uses Apple Vision instead) | none / 50 MB / none (use your package manager) | Apache-2.0 |
 | LibreOffice 26.2 | DOC, PPT, RTF, ODF and other older or rare Office formats | 298 to 308 MB / 423 MB (with the HWP filter H2Orestart and a JRE) / none (use your package manager) | MPL-2.0 (+ LGPL/GPL parts) |
 
 Sizes are the pinned downloads (`filee-cli engines list` shows the ones for your computer); a first LibreOffice or calibre

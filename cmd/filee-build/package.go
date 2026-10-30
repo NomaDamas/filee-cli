@@ -21,11 +21,12 @@ import (
 
 // Words that mean a GUI, tray, shell-integration or installer file. The package must contain none of them.
 var forbidden = []string{"avalonia", "sharphook", "uiohook", "communitytoolkit", "filee.app", "filee.exe", "filee.dll",
-	"filee.platform", "fileeexplorermenu", "setup", "installer", "install.sh", "uninstall", ".app/", ".msi",
+	"fileeexplorermenu", "setup", "installer", "install.sh", "uninstall", ".app/", ".msi",
 	"inno", "materialdesign", "simpleicons", "notosans"}
 
 var allowedFilee = map[string]bool{"filee-cli": true, "filee-cli.exe": true, "filee-cli.dll": true, "filee-cli.deps.json": true,
-	"filee-cli.runtimeconfig.json": true, "filee.core.dll": true, "filee.engines.dll": true}
+	"filee-cli.runtimeconfig.json": true, "filee.core.dll": true, "filee.engines.dll": true,
+	"filee.platform.windows.dll": true, "filee.platform.linux.dll": true, "filee.platform.macos.dll": true}
 
 func cmdPackage(args []string) error {
 	fl := newFlags("package")
@@ -403,7 +404,7 @@ func writeUpstreamMD(pkg, rid string, up Upstream, info EnginesInfo, sdk, built,
 - Upstream: %[3]s
 - Tag: `+"`%[4]s`"+`
 - Commit: `+"`%[5]s`"+` (%[3]s/tree/%[5]s)
-- Projects built: `+"`src/Filee.Cli`"+` with `+"`Filee.Core`"+` and `+"`Filee.Engines`"+`. Nothing else of upstream is built or included.
+- Projects built: `+"`src/Filee.Cli`"+` with `+"`Filee.Core`"+`, `+"`Filee.Engines`"+` and the three `+"`Filee.Platform`"+` libraries. Nothing else of upstream is built or included.
 - Patches applied to the upstream source:
 %[6]s
 - Packaging revision: %[7]s (package version %[1]s = upstream %[8]s + packaging revision)

@@ -48,6 +48,12 @@
    "license": "Microsoft Visual C++ Redistributable license",
    "url": "https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist",
    "source": "n/a (binary redistributable)"
+  },
+  "tesseract": {
+   "name": "Tesseract OCR (UB Mannheim Windows build, with Leptonica and its bundled libraries)",
+   "license": "Apache-2.0 (Tesseract); Leptonica BSD-2-Clause; others as listed in the build",
+   "url": "https://github.com/UB-Mannheim/tesseract/releases",
+   "source": "https://github.com/tesseract-ocr/tesseract"
   }
  }
 }

@@ -185,8 +185,8 @@ new file mode 100644
 index 0000000..c25949a
 --- /dev/null
 +++ b/src/Filee.Cli/EngineSetup.cs
-@@ -0,0 +1,277 @@
-+// Installs the optional engines (LibreOffice, Pandoc, Ghostscript, FFmpeg, calibre) when a conversion needs one that
+@@ -0,0 +1,278 @@
++// Installs the optional engines (LibreOffice, Pandoc, Ghostscript, FFmpeg, calibre, Tesseract) when a conversion needs one that
 +// is not there, and implements "filee engines list|install|remove". The app does the same from Settings → Engines;
 +// the command line has no window to ask in, so a conversion that cannot run installs the engine itself, unless
 +// --no-install is given. Progress goes to the error stream, so --json output stays one clean document.
@@ -386,6 +386,7 @@ index 0000000..c25949a
 +        "ghostscript" => "EPS and PostScript",
 +        "ffmpeg" => "video and audio",
 +        "calibre" => "Kindle (MOBI, AZW3) and rare e-book formats",
++        "tesseract" => "OCR (text recognition)",
 +        _ => "",
 +    };
 +
@@ -508,7 +509,7 @@ index 3ec9e02..8590500 100644
 +               filee engines install <engine...|all>
 +               filee engines remove <engine...|all>
 +
-+        Engines are separate programs that do some conversions: libreoffice, pandoc, ghostscript, ffmpeg, calibre.
++        Engines are separate programs that do some conversions: libreoffice, pandoc, ghostscript, ffmpeg, calibre, tesseract.
 +        They are not part of filee-cli. A conversion that needs one downloads it (checked against a pinned SHA-256)
 +        into the engines folder of your Filee data folder, and goes on; pass --no-install to convert and fail instead.
 +        'install' gets engines ahead of time, for example before going offline; 'remove' deletes the downloaded copy.
@@ -516,17 +517,17 @@ index 3ec9e02..8590500 100644
 +
 +        """;
 +
-     private const string Watch = """
+     private static string Watch => FormattableString.Invariant($"""
          Usage: filee watch <folder> (--to <format> | --preset <preset>) [options]
  
-@@ -77,6 +95,7 @@ converted at start
-               --settle <seconds> How long a file must stay unchanged (default 2)
+@@ -78,6 +96,7 @@ converted at start
+               --settle <seconds> How long a file must stay unchanged (default {FolderWatcher.DefaultSettleTime.TotalSeconds})
                --keep-dates       Give converted files the created and modified dates of the originals
                --zip              Save the result of each file as one ZIP (a Shapefile's files together)
 +              --no-install       Never download an engine; a conversion that needs one fails and names it
                --quiet            Print nothing but errors
  
-         """;
+         """);
 diff --git a/src/Filee.Engines/Infrastructure/EngineDownloads.cs b/src/Filee.Engines/Infrastructure/EngineDownloads.cs
 index 7ae3e30..b762d08 100644
 --- a/src/Filee.Engines/Infrastructure/EngineDownloads.cs
@@ -540,9 +541,9 @@ index 7ae3e30..b762d08 100644
 +
  /// <summary>One download from engines.json.</summary>
  /// <param name="Kind">
--/// Archive format: zip, tar.gz, tar.xz, dmg, msi, oxt or conda.
-+/// Archive format: zip, tar.gz, tar.xz, dmg, msi, oxt or conda; zip-programs (zips that each hold one program, the
-+/// component's file and its companions) and conda-unix (the program of a conda package for macOS) are new.
+-/// Archive format: zip, tar.gz, tar.xz, dmg, msi, oxt, conda or nsis.
++/// Archive format: zip, tar.gz, tar.xz, dmg, msi, oxt, conda or nsis; zip-programs (zips that each hold one program,
++/// the component's file and its companions) and conda-unix (the program of a conda package for macOS) are new.
  /// </param>
  /// <param name="Size">Download size in bytes.</param>
 -public sealed record EngineComponent(string Id, string Version, string Url, string Sha256, long Size, string Kind);
@@ -684,8 +685,10 @@ index 12fe5fa..a7f2c4a 100644
      {
          // Short name: LibreOffice's own folder structure is deep, and msiexec fails beyond MAX_PATH (260 chars).
          var staging = Path.Combine(_root, "~" + Guid.NewGuid().ToString("N")[..6]);
-@@ -205,6 +227,16 @@ private async Task UnpackAsync(EngineComponent component, string file, Cancellat
-                     UnpackConda(file, staging, cancellationToken);
+@@ -219,8 +241,18 @@ private async Task UnpackAsync(EngineComponent component, string file, Cancellat
+                     Directory.CreateDirectory(staging);
+                     await sevenZip.ExtractAsync(file, staging, [], _root, cancellationToken);
+                     TrimTesseract(staging);
                      Replace(component.Id, staging);
                      break;
 +                case "conda-unix":
@@ -701,7 +704,7 @@ index 12fe5fa..a7f2c4a 100644
                  case "oxt":
                      // LibreOffice registers bundled extensions (plain folders under share/extensions) on start-up.
                      var extensions = Path.Combine(FolderOf("libreoffice"), "share", "extensions");
-@@ -219,7 +251,7 @@ private async Task UnpackAsync(EngineComponent component, string file, Cancellat
+@@ -235,7 +265,7 @@ private async Task UnpackAsync(EngineComponent component, string file, Cancellat
                  default:
                      throw new NotSupportedException($"Unknown engine package kind '{component.Kind}'.");
              }
