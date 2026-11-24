@@ -22,9 +22,15 @@ type pinsFile struct {
 	} `json:"unhwp"`
 	SevenZip struct {
 		Version, Repository, Tag, Commit, License string
+		MacOS                                     struct {
+			Version, Tag, Commit string
+		} `json:"macos"`
 	} `json:"7zip"`
 	MagickNative struct {
 		Version, Repository, Tag, Commit string
+		MacOS                            map[string]struct {
+			URL, Sha256 string
+		} `json:"macos"`
 	} `json:"magick_native"`
 	Pdfium struct {
 		Release, Repository string

@@ -885,16 +885,20 @@ func generateNotices(stage, publish, rid string, engines EnginesInfo) error {
 	} else {
 		rhwpSource = fmt.Sprintf("rhwp's own release build of tag `%s` (%s)", pins.Rhwp.Tag, engines.Rhwp.URL)
 	}
+	szVersion, szTag, szCommit := pins.SevenZip.Version, pins.SevenZip.Tag, pins.SevenZip.Commit
+	if strings.HasPrefix(rid, "osx-") && pins.SevenZip.MacOS.Version != "" {
+		szVersion, szTag, szCommit = pins.SevenZip.MacOS.Version, pins.SevenZip.MacOS.Tag, pins.SevenZip.MacOS.Commit
+	}
 	w(table([]string{"Engine", "Version", "License", "Source"}, [][]string{
 		{"rhwp (`engines/rhwp`)", pins.Rhwp.Version, "MIT", link(treeURL(pins.Rhwp.Repository, pins.Rhwp.Commit), "edwardkim/rhwp@"+pins.Rhwp.Commit[:12]) + "; " + rhwpSource},
-		{"7-Zip (`engines/7zip`)", pins.SevenZip.Version, pins.SevenZip.License, link(treeURL(pins.SevenZip.Repository, pins.SevenZip.Tag), "ip7z/7zip tag "+pins.SevenZip.Tag) + fmt.Sprintf(" (commit %s); binary from %s", pins.SevenZip.Commit[:12], engines.SevenZip.URL)}}))
+		{"7-Zip (`engines/7zip`)", szVersion, pins.SevenZip.License, link(treeURL(pins.SevenZip.Repository, szTag), "ip7z/7zip tag "+szTag) + fmt.Sprintf(" (commit %s); binary from %s", szCommit[:12], engines.SevenZip.URL)}}))
 	w("7-Zip is Copyright (C) 1999-2026 Igor Pavlov; its `License.txt` is in `engines/7zip`. The RAR decompression code in 7-Zip is under the unRAR license restriction: it may be used to unpack RAR archives, but not to develop a RAR (WinRAR) compatible archiver or to re-create the RAR compression algorithm. Filee only reads RAR files.\n")
 	w(fmt.Sprintf("rhwp's `LICENSE` is in `engines/rhwp`. Rust crates in rhwp (%d, superset over all platforms; license files in `licenses/rust/rhwp/`):\n", len(crateSections["rhwp"])))
 	w(crateTable(crateSections["rhwp"]))
 	w("rhwp does not embed font files in its release binary; it uses fonts installed on the computer (the fonts in the rhwp repository are web/test assets that are not part of the program).\n")
 
 	w("## Engines downloaded on demand\n")
-	w("`filee-cli` downloads these programs, unmodified, into the user's engines folder (`filee engines list` shows where) the first time a conversion needs one, or when `filee engines install` is run. Each file is the one Filee itself offers, from the vendor's own location pinned in Filee's `engines.json`, and is checked against the pinned SHA-256 before it is unpacked. **None of them is in this package or in this repository's releases.** They are separate programs under their own licenses (mostly GPL/AGPL) that `filee-cli` starts as processes; the source code of each is available from the sources below. Where the PC already has one on the `PATH` (or in the usual locations) that one is used and nothing is downloaded.\n")
+	w("`filee-cli` downloads these programs, unmodified, into the user's engines folder (`filee-cli engines` shows them) the first time a conversion needs one, or when `filee-cli engines install <id>` is run. Each file is the one Filee itself offers, from the vendor's own location pinned in Filee's `engines.json`, and is checked against the pinned SHA-256 before it is unpacked. **None of them is in this package or in this repository's releases.** They are separate programs under their own licenses (mostly GPL/AGPL) that `filee-cli` starts as processes; the source code of each is available from the sources below. Where the PC already has one on the `PATH` (or in the usual locations) that one is used and nothing is downloaded.\n")
 	w(table([]string{"Engine", "License", "Official download", "Source code"}, optionalRows))
 
 	w("## License texts\n")

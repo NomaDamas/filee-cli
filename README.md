@@ -26,12 +26,12 @@ or installer), and are built from a pinned upstream tag by the scripts here.
 | anywhere | the archive from the [latest release](https://github.com/NomaDamas/filee-cli/releases/latest), see below |
 
 ```sh
-filee-cli formats                          # 268 formats, 402 extensions
+filee-cli formats                          # 297 formats, 469 extensions
 filee-cli convert photo.heic --to jpg
 filee-cli convert *.png --to webp -q 80 -o out
 ```
 
-The download is 77 to 87 MB per platform. The conversion engines (FFmpeg, Pandoc, calibre, Ghostscript, LibreOffice) are **not in the package**: the first
+The download is 77 to 93 MB per platform. The conversion engines (FFmpeg, Pandoc, calibre, Ghostscript, LibreOffice, …) are **not in the package**: the first
 conversion that needs one downloads the vendor's copy, checked against a pinned SHA-256 (see "Engines" below).
 Both package managers check the package's SHA-256.
 
@@ -80,7 +80,8 @@ cd filee-cli-2.0.0-3-osx-arm64
 ```
 
 `--json` prints one JSON object (`preset`, `target`, `converted`, `skipped`, `failed`, `files[]` with `state`,
-`outputs`, `error`). Exit codes: 0 all converted, 1 some failed, 2 wrong arguments or a missing input, 3 nothing to
+`outputs`, `error`, `needsEngines`); progress and file events stream to stderr as JSON lines. Exit codes: 0 nothing
+failed (skipped files included), 1 some failed or were cancelled, 2 wrong arguments or a missing input, 3 nothing to
 convert. Put the folder on `PATH`, or link `filee-cli` into a directory that is.
 
 Callers should run it as a **separate process** (it is a self-contained .NET program with its own native libraries).
@@ -111,8 +112,10 @@ downloads it from the vendor's own location, checks the **SHA-256 pinned in File
 A download that does not match is discarded and nothing is installed.
 
 ```sh
-filee-cli engines list                   # what each engine is for, its size, and whether it is installed
-filee-cli engines install ffmpeg         # get one ahead of time (before going offline); "all" gets every one
+filee-cli engines                        # what each engine is for, its status, version and size
+filee-cli engines install ffmpeg         # get one ahead of time (before going offline)
+filee-cli engines download ffmpeg -o usb # save verified downloads for a computer without internet
+filee-cli engines install ffmpeg --from usb
 filee-cli engines remove calibre         # delete the copy filee-cli downloaded
 filee-cli convert clip.mp4 --to mp3      # downloads FFmpeg first (on stderr), then converts
 filee-cli convert a.md --to pdf --no-install   # never download: a missing engine fails the file and names it
@@ -120,14 +123,18 @@ filee-cli convert a.md --to pdf --no-install   # never download: a missing engin
 
 | Engine | Used for | Download (macOS / Windows / Linux) | License |
 |---|---|---|---|
-| FFmpeg 9.0.2 | video, audio, Live Photo, HEIC writing | 54 to 68 MB / 100 MB / 127 to 151 MB | GPL-3.0-or-later |
-| Pandoc 3.12 | Markdown, LaTeX, Org, AsciiDoc, Markdown → slides | 26 to 42 MB / 42 MB / 35 to 38 MB | GPL-2.0-or-later |
-| Ghostscript 10.08 | EPS, PostScript | 60 MB / 20 MB / none (use your package manager) | AGPL-3.0 |
-| calibre 9.15 | Kindle (MOBI, AZW3) and rare e-book formats | 350 MB / 227 MB / 182 to 195 MB | GPL-3.0 |
+| FFmpeg 9.0.2 | video, audio, Live Photo, HEIC writing | 57 to 68 MB / 100 MB / 127 to 151 MB | GPL-3.0-or-later |
+| Pandoc 3.13 | Markdown, LaTeX, Org, AsciiDoc, Markdown → slides | 27 to 43 MB / 43 MB / 36 to 39 MB | GPL-2.0-or-later |
+| Ghostscript 10.08 | EPS, PostScript, PDF/A | 60 to 61 MB / 20 MB / none (use your package manager) | AGPL-3.0 |
+| calibre 9.17 | Kindle (MOBI, AZW3) and rare e-book formats | 358 MB / 240 MB / 188 to 202 MB | GPL-3.0 |
+| WeasyPrint 70.0 | HTML, Markdown and e-mail → PDF | none / 32 MB / none | BSD-3-Clause (+ bundled libs) |
 | Tesseract 5.4 | OCR (macOS uses Apple Vision instead) | none / 50 MB / none (use your package manager) | Apache-2.0 |
+| Whisper b5454 | video and audio speech-to-text subtitles (.srt) | none / 157 MB (with base model) / none | MIT |
+| ExifTool 13.60 | metadata reading and editing | 8 MB / 11 MB / 8 MB | Artistic-1.0-Perl OR GPL-1.0-or-later |
+| Upscayl 20251207 | offline AI image upscaling | 9 MB / 3 MB / 4 MB (x64) | AGPL-3.0 |
 | LibreOffice 26.2 | DOC, PPT, RTF, ODF and other older or rare Office formats | 298 to 308 MB / 423 MB (with the HWP filter H2Orestart and a JRE) / none (use your package manager) | MPL-2.0 (+ LGPL/GPL parts) |
 
-Sizes are the pinned downloads (`filee-cli engines list` shows the ones for your computer); a first LibreOffice or calibre
+Sizes are the pinned downloads (`filee-cli engines` shows the ones for your computer); a first LibreOffice or calibre
 conversion on Windows took about 15 minutes to download and unpack on the test machine, later ones take seconds. The
 download size on disk after unpacking is larger (calibre about 660 MB, LibreOffice 1.3 GB).
 
@@ -141,7 +148,7 @@ download size on disk after unpacking is larger (calibre about 660 MB, LibreOffi
 - PML output uses Calibre's PMLZ writer through [this patch](patches/0002-pml-output.patch): `--to pml` creates a
   `.pmlz` archive containing `index.pml` and its images, because Calibre has no plain `.pml` output plugin.
 - Linux has no Ghostscript or LibreOffice download (Filee offers none): install them with your package manager and
-  `filee-cli` finds them. `filee-cli engines list` says so.
+  `filee-cli` finds them. `filee-cli engines` says so.
 - Concurrent `filee-cli` processes take turns installing (a lock file in the engines folder), so two of them never
   unpack into the same folder.
 - On Linux calibre is a Qt program: it needs `libxcb1 libxkbcommon0 libfontconfig1 libfreetype6 libx11-6 libegl1

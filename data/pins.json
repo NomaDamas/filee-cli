@@ -15,17 +15,32 @@
     "license": "MIT"
   },
   "7zip": {
-    "version": "26.03",
+    "version": "26.05",
     "repository": "https://github.com/ip7z/7zip",
-    "tag": "26.03",
-    "commit": "0766b733fe3e06dd2a7f9a3cfbf2108ac73abd17",
-    "license": "LGPL-2.1-or-later (parts: LGPL with the unRAR license restriction, BSD-3-Clause, BSD-2-Clause)"
+    "tag": "26.05",
+    "commit": "b88c6bc09339de32f7d18bbab900686b244f42ba",
+    "license": "LGPL-2.1-or-later (parts: LGPL with the unRAR license restriction, BSD-3-Clause, BSD-2-Clause)",
+    "macos": {
+      "version": "25.01",
+      "tag": "25.01",
+      "commit": "5e96a8279489832924056b1fa82f29d5837c9469"
+    }
   },
   "magick_native": {
-    "version": "2026.927.1314",
+    "version": "2026.1010.1943",
     "repository": "https://github.com/dlemstra/Magick.Native",
-    "tag": "2026.927.1314",
-    "commit": "999720f7ebe03d5a0029536f1586a2cb82b500ae"
+    "tag": "2026.1010.1943",
+    "commit": "4dcdad28530c14c8d35687fdeb1ecc8d39b01e30",
+    "macos": {
+      "osx-arm64": {
+        "url": "https://dl.filee.sh/engines/magick-native/2026.1010.1943/Magick.Native-Q8-arm64.dll.dylib",
+        "sha256": "d8c4f6733e50e3457d5324291d1f96cb859d8f2e8983c94fd405b07c89a14e6d"
+      },
+      "osx-x64": {
+        "url": "https://dl.filee.sh/engines/magick-native/2026.1010.1943/Magick.Native-Q8-x64.dll.dylib",
+        "sha256": "40852de95f53128cb0a77edc6857eb62d0e866ef1c34de42673b539c1bd4a898"
+      }
+    }
   },
   "pdfium": {
     "release": "chromium/7690",

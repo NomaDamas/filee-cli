@@ -18,8 +18,8 @@ const notesTemplate = "# filee-cli %[1]s\n\n" +
 	"```powershell\n(Get-FileHash .\\filee-cli-%[1]s-win-x64.zip -Algorithm SHA256).Hash.ToLower()   # compare with the table\n```\n\n" +
 	"Each archive has one top-level folder `filee-cli-%[1]s-<rid>/` with `filee-cli` (`filee-cli.exe` on Windows),\n" +
 	"`engines/` (rhwp and 7-Zip), `LICENSE`, `THIRD-PARTY-NOTICES.md` and `UPSTREAM.md`. Conversion engines (FFmpeg,\n" +
-	"Pandoc, calibre, Ghostscript, LibreOffice) are not in the packages: `filee-cli` downloads the vendor's own copy, checked\n" +
-	"against a pinned SHA-256, the first time a conversion needs one (`filee-cli engines list`). Licenses of every component\n" +
+	"Pandoc, calibre, Ghostscript, LibreOffice, …) are not in the packages: `filee-cli` downloads the vendor's own copy, checked\n" +
+	"against a pinned SHA-256, the first time a conversion needs one (`filee-cli engines`). Licenses of every component\n" +
 	"are in `THIRD-PARTY-NOTICES.md`.\n%[6]s"
 
 // cmdRelease writes SHA256SUMS and RELEASE_NOTES.md for exactly the five packages, failing on a missing or extra file or a
