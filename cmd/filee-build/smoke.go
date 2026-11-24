@@ -440,6 +440,11 @@ func smokeEngines(s *smoke, pkg, name string, windows, heavy bool) error {
 		fmt.Println("PS -> PDF (Ghostscript, downloaded on demand) ok")
 	}
 
+	if heavy {
+		if err := smokeHeavy(s, name, windows, onPC, downloads, prepare); err != nil {
+			return err
+		}
+	}
 	list, err = s.run(0, "engines")
 	if err != nil {
 		return err
@@ -456,11 +461,6 @@ func smokeEngines(s *smoke, pkg, name string, windows, heavy bool) error {
 			if strings.HasPrefix(l, id+" ") && !strings.Contains(l, "  installed  ") {
 				return fmt.Errorf("after the conversions engines says: %q (expected installed)", l)
 			}
-		}
-	}
-	if heavy {
-		if err := smokeHeavy(s, name, windows, onPC, downloads, prepare); err != nil {
-			return err
 		}
 	}
 	// remove deletes only what filee-cli installed.
