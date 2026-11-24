@@ -44,7 +44,13 @@
    "source": "https://github.com/adoptium/jdk21u"
   },
   "vcruntime": {
-   "name": "Microsoft Visual C++ Redistributable (used by Ghostscript on Windows)",
+   "name": "Microsoft Visual C++ Redistributable (used by Ghostscript and Upscayl on Windows)",
+   "license": "Microsoft Visual C++ Redistributable license",
+   "url": "https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist",
+   "source": "n/a (binary redistributable)"
+  },
+  "vcomp14": {
+   "name": "Microsoft Visual C++ OpenMP Runtime (used by Upscayl on Windows)",
    "license": "Microsoft Visual C++ Redistributable license",
    "url": "https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist",
    "source": "n/a (binary redistributable)"
@@ -54,6 +60,36 @@
    "license": "Apache-2.0 (Tesseract); Leptonica BSD-2-Clause; others as listed in the build",
    "url": "https://github.com/UB-Mannheim/tesseract/releases",
    "source": "https://github.com/tesseract-ocr/tesseract"
+  },
+  "weasyprint": {
+   "name": "WeasyPrint (Windows onedir build, with Python, Pango, HarfBuzz and bundled libraries)",
+   "license": "BSD-3-Clause (WeasyPrint); PSF-2.0 (Python); LGPL-2.1-or-later (Pango, GLib, FriBidi, libthai); MIT and others as listed in the build",
+   "url": "https://github.com/Kozea/WeasyPrint/releases",
+   "source": "https://github.com/Kozea/WeasyPrint"
+  },
+  "whisper": {
+   "name": "whisper.cpp (Windows build)",
+   "license": "MIT",
+   "url": "https://github.com/ggml-org/whisper.cpp/releases",
+   "source": "https://github.com/ggml-org/whisper.cpp"
+  },
+  "whisper-model": {
+   "name": "Whisper base model (ggml-base.bin)",
+   "license": "MIT",
+   "url": "https://huggingface.co/ggerganov/whisper.cpp",
+   "source": "https://huggingface.co/ggerganov/whisper.cpp"
+  },
+  "exiftool": {
+   "name": "ExifTool",
+   "license": "Artistic-1.0-Perl OR GPL-1.0-or-later",
+   "url": "https://exiftool.org",
+   "source": "https://github.com/exiftool/exiftool"
+  },
+  "upscayl-bin": {
+   "name": "upscayl-ncnn (AI super-resolution binary)",
+   "license": "AGPL-3.0",
+   "url": "https://github.com/upscayl/upscayl-ncnn/releases",
+   "source": "https://github.com/upscayl/upscayl-ncnn"
   }
  }
 }

@@ -43,13 +43,13 @@
    "commit": "ba62bf4cfb3242f3bf0a45617ff09e35236e4d82",
    "license": "LGPL-3.0-or-later"
   },
-  "openexr": {
-   "version": "3.5.1",
-   "repository": "https://github.com/AcademySoftwareFoundation/openexr",
-   "tag": "v3.5.1",
-   "commit": "490f4cb496ac1db9f675dae7bad689f676a8256f",
-   "license": "BSD-3-Clause"
-  },
+ "openexr": {
+  "version": "3.5.2",
+  "repository": "https://github.com/AcademySoftwareFoundation/openexr",
+  "tag": "v3.5.2",
+  "commit": "69b2604fc76e370615438bdc8d2cd95b9349c12e",
+  "license": "BSD-3-Clause"
+ },
   "libffi": {
    "version": "3.8.0",
    "repository": "https://github.com/libffi/libffi",
@@ -92,20 +92,20 @@
    "commit": "af1edc1c338d9a8b2a99bdd0e6cc6bede51f40b4",
    "license": "LGPL-2.1-or-later"
   },
-  "harfbuzz": {
-   "version": "14.5.0",
-   "repository": "https://github.com/harfbuzz/harfbuzz",
-   "tag": "14.5.0",
-   "commit": "863d3f7787c6df18d20e4535c5906bf3eb803bd5",
-   "license": "MIT (Old MIT)"
-  },
-  "libheif": {
-   "version": "1.23.5",
-   "repository": "https://github.com/strukturag/libheif",
-   "tag": "v1.23.5",
-   "commit": "413e2a87e6a70b3eccc3a3adc5801179dd2d9e00",
-   "license": "LGPL-3.0-or-later"
-  },
+ "harfbuzz": {
+  "version": "14.6.0",
+  "repository": "https://github.com/harfbuzz/harfbuzz",
+  "tag": "14.6.0",
+  "commit": "c7a7457b7385f33178e8cf87615ca077a810bbe7",
+  "license": "MIT (Old MIT)"
+ },
+ "libheif": {
+  "version": "1.23.6",
+  "repository": "https://github.com/strukturag/libheif",
+  "tag": "v1.23.6",
+  "commit": "f81f28ac014b1c28dee483ac45b72c6b05bc421a",
+  "license": "LGPL-3.0-or-later"
+ },
   "libhwy": {
    "version": "1.4.0",
    "repository": "https://github.com/google/highway",
@@ -190,13 +190,13 @@
    "commit": "9cc163c9da0fb4da430641715313d95a6ec466d9",
    "license": "MIT"
   },
-  "libpng": {
-   "version": "1.6.58",
-   "repository": "https://github.com/pnggroup/libpng",
-   "tag": "v1.6.58",
-   "commit": "3061454d980de7d53608f594194cfac722721d2a",
-   "license": "PNG Reference Library License v2"
-  },
+ "libpng": {
+  "version": "1.6.59",
+  "repository": "https://github.com/pnggroup/libpng",
+  "tag": "v1.6.59",
+  "commit": "cd952f49f95bb27154ae77dbb103032d95f6e580",
+  "license": "PNG Reference Library License v2"
+ },
   "libraqm": {
    "version": "0.11.0",
    "repository": "https://github.com/HOST-Oman/libraqm",
@@ -261,10 +261,10 @@
    "license": "BSD-3-Clause OR GPL-2.0-only; used under BSD-3-Clause"
   },
   "ImageMagick": {
-   "version": "7.1.2-32",
-   "repository": "https://github.com/ImageMagick/ImageMagick",
-   "tag": "7.1.2-32",
-   "commit": "ad98b244c995d2e3051757fa3b7855f45b550d24",
+  "version": "7.1.2-33",
+  "repository": "https://github.com/ImageMagick/ImageMagick",
+  "tag": "7.1.2-33",
+  "commit": "211e5b975a0019a88dcef5f84c1193f46738d815",
    "license": "ImageMagick License (Apache-2.0 style)"
   }
  }

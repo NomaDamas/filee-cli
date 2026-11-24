@@ -91,6 +91,11 @@ func cmdPackage(args []string) error {
 	if err != nil {
 		return err
 	}
+	if strings.HasPrefix(*rid, "osx-") {
+		if err := installMacOSMagickNative(*rid, pkg); err != nil {
+			return err
+		}
+	}
 	if err := copyFile(filepath.Join(rootDir, "LICENSE"), filepath.Join(pkg, "LICENSE")); err != nil {
 		return err
 	}
@@ -167,6 +172,25 @@ func publish(rid, version, dest string) error {
 		}
 		return err
 	})
+}
+
+// installMacOSMagickNative places the macOS 13 build of Magick.Native into pkg (replacing Magick.NET's arm64 library,
+// which targets a newer macOS, and adding the x64 library that Magick.NET 15 no longer ships).
+func installMacOSMagickNative(rid, pkg string) error {
+	pins, err := readPins()
+	if err != nil {
+		return err
+	}
+	pin, ok := pins.MagickNative.MacOS[rid]
+	if !ok {
+		return fmt.Errorf("data/pins.json has no magick_native.macos entry for %s", rid)
+	}
+	cached, err := download(pin.URL, pin.Sha256, filepath.Join(cacheDir(), "downloads"))
+	if err != nil {
+		return err
+	}
+	name := fmt.Sprintf("Magick.Native-Q8-%s.dll.dylib", strings.TrimPrefix(rid, "osx-"))
+	return copyFile(cached, filepath.Join(pkg, name))
 }
 
 // fetchEngine downloads one pinned engine (SHA-256 checked), unpacks it, and returns the folder with its files.

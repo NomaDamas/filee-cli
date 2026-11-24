@@ -176,8 +176,12 @@ func checkEngineVersions(pins pinsFile) error {
 		if c["rhwp"].Version != pins.Rhwp.Version {
 			problems = append(problems, fmt.Sprintf("engines.json pins rhwp %s for %s but data/pins.json describes %s", c["rhwp"].Version, rid, pins.Rhwp.Version))
 		}
-		if c["7zip"].Version != pins.SevenZip.Version {
-			problems = append(problems, fmt.Sprintf("engines.json pins 7-Zip %s for %s but data/pins.json describes %s", c["7zip"].Version, rid, pins.SevenZip.Version))
+		want7z := pins.SevenZip.Version
+		if strings.HasPrefix(rid, "osx-") && pins.SevenZip.MacOS.Version != "" {
+			want7z = pins.SevenZip.MacOS.Version
+		}
+		if c["7zip"].Version != want7z {
+			problems = append(problems, fmt.Sprintf("engines.json pins 7-Zip %s for %s but data/pins.json describes %s", c["7zip"].Version, rid, want7z))
 		}
 	}
 	if len(problems) > 0 {

@@ -329,7 +329,7 @@ func smokeEngines(s *smoke, pkg, name string, windows, heavy bool) error {
 	}
 
 	onPC := map[string]bool{}
-	list, err := s.run(0, "engines", "list")
+	list, err := s.run(0, "engines")
 	if err != nil {
 		return err
 	}
@@ -344,14 +344,14 @@ func smokeEngines(s *smoke, pkg, name string, windows, heavy bool) error {
 			}
 		}
 		if line == "" {
-			return fmt.Errorf("engines list does not offer %s", id)
+			return fmt.Errorf("engines does not offer %s", id)
 		}
-		if strings.Contains(line, "installed (older") {
-			return fmt.Errorf("engines list: %s is installed in an empty data folder: %q", id, line)
+		if strings.Contains(line, "update available") || (strings.Contains(line, "  installed  ")) {
+			return fmt.Errorf("engines: %s is installed in an empty data folder: %q", id, line)
 		}
 		onPC[id] = !strings.Contains(line, "not installed")
 	}
-	fmt.Println("engines list offers every engine of this platform ok")
+	fmt.Println("engines offers every engine of this platform ok")
 
 	// A developer machine may have engines (Homebrew, an installed LibreOffice); Filee finds those even with a clean
 	// PATH. Then the download is requested by name (that installs Filee's own copy, which is used before the PC's);
@@ -440,7 +440,12 @@ func smokeEngines(s *smoke, pkg, name string, windows, heavy bool) error {
 		fmt.Println("PS -> PDF (Ghostscript, downloaded on demand) ok")
 	}
 
-	list, err = s.run(0, "engines", "list")
+	if heavy {
+		if err := smokeHeavy(s, name, windows, onPC, downloads, prepare); err != nil {
+			return err
+		}
+	}
+	list, err = s.run(0, "engines")
 	if err != nil {
 		return err
 	}
@@ -453,14 +458,9 @@ func smokeEngines(s *smoke, pkg, name string, windows, heavy bool) error {
 			continue
 		}
 		for _, l := range strings.Split(list, "\n") {
-			if strings.HasPrefix(l, id+" ") && !strings.Contains(l, " installed ") {
-				return fmt.Errorf("after the conversions engines list says: %q (expected installed)", l)
+			if strings.HasPrefix(l, id+" ") && !strings.Contains(l, "  installed  ") {
+				return fmt.Errorf("after the conversions engines says: %q (expected installed)", l)
 			}
-		}
-	}
-	if heavy {
-		if err := smokeHeavy(s, name, windows, onPC, downloads, prepare); err != nil {
-			return err
 		}
 	}
 	// remove deletes only what filee-cli installed.
